@@ -1,23 +1,41 @@
+export type StandardRole =
+  | "SUPER_ADMIN"
+  | "ADMIN"
+  | "DOCTOR"
+  | "NURSE"
+  | "RECEPTIONIST"
+  | "PHARMACIST"
+  | "ACCOUNTANT"
+  | "LAB_TECHNICIAN"
+  | "RADIOLOGY_TECHNICIAN"
+  | "PATIENT";
+
 export type UserRole =
+  | StandardRole
   | "super_admin"
   | "hospital_admin"
+  | "admin"
   | "doctor"
   | "receptionist"
   | "nurse"
   | "pharmacist"
   | "lab_technician"
+  | "radiology_technician"
   | "accountant"
   | "patient";
 
 export interface IUser {
   _id?: string;
+  id?: string;
   name: string;
   email: string;
   role: UserRole;
+  employeeId?: string;
+  patientId?: string;
   phone?: string;
   avatar?: string;
   department?: string;
-  status: "active" | "inactive";
+  status: "active" | "inactive" | "suspended" | "Active" | "Inactive" | "Suspended";
   digitalSignature?: string;
   mciRegistrationNumber?: string;
   qualification?: string;

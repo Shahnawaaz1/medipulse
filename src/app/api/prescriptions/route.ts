@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db";
 import Prescription from "@/models/Prescription";
+import Patient from "@/models/Patient";
+import { getPatientScope } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   try {
@@ -10,7 +12,27 @@ export async function GET(req: NextRequest) {
     const doctorId = searchParams.get("doctor") || "";
 
     const query: any = {};
-    if (patientId) query.patient = patientId;
+    const patientScope = getPatientScope(req);
+
+    // Patient Data Isolation
+    if (patientScope.isPatient) {
+      let patientDoc = null;
+      if (patientScope.patientId) {
+        patientDoc = await Patient.findOne({ patientId: patientScope.patientId });
+      }
+      if (!patientDoc && patientScope.patientEmail) {
+        patientDoc = await Patient.findOne({ email: patientScope.patientEmail.toLowerCase() });
+      }
+
+      if (patientDoc) {
+        query.patient = patientDoc._id;
+      } else {
+        return NextResponse.json({ success: true, prescriptions: [] });
+      }
+    } else {
+      if (patientId) query.patient = patientId;
+    }
+
     if (doctorId) query.doctor = doctorId;
 
     const prescriptions = await Prescription.find(query)

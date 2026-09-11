@@ -13,12 +13,13 @@ import {
   Shield,
   CheckCircle,
   RefreshCw,
-  Sun,
-  Moon,
+  UserCheck,
+  Settings,
 } from "lucide-react";
 import { GlobalSearchModal } from "./GlobalSearchModal";
 import { QuickActionModal } from "./QuickActionModal";
 import { cn } from "@/lib/utils";
+import { ROLE_LABELS, normalizeRole } from "@/lib/permissions";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -27,18 +28,19 @@ interface HeaderProps {
 }
 
 const roleOptions: { label: string; value: UserRole }[] = [
-  { label: "Super Admin", value: "super_admin" },
-  { label: "Doctor", value: "doctor" },
-  { label: "Receptionist", value: "receptionist" },
-  { label: "Nurse", value: "nurse" },
-  { label: "Pharmacist", value: "pharmacist" },
-  { label: "Lab Technician", value: "lab_technician" },
-  { label: "Accountant", value: "accountant" },
-  { label: "Patient", value: "patient" },
+  { label: "Super Admin", value: "SUPER_ADMIN" },
+  { label: "Doctor", value: "DOCTOR" },
+  { label: "Nurse", value: "NURSE" },
+  { label: "Receptionist", value: "RECEPTIONIST" },
+  { label: "Pharmacist", value: "PHARMACIST" },
+  { label: "Accountant", value: "ACCOUNTANT" },
+  { label: "Lab Technician", value: "LAB_TECHNICIAN" },
+  { label: "Radiology Tech", value: "RADIOLOGY_TECHNICIAN" },
+  { label: "Patient", value: "PATIENT" },
 ];
 
 export function Header({ onToggleSidebar }: HeaderProps) {
-  const { user, role, switchRole, logout } = useAuth();
+  const { user, role, switchRole, logout, isAdmin, isPatient } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
   const [quickActionOpen, setQuickActionOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -94,7 +96,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
 
   const handleRoleChange = async (newRole: UserRole) => {
     await switchRole(newRole);
-    toast.success(`Role switched to ${newRole.replace("_", " ").toUpperCase()}`);
+    toast.success(`Active role: ${ROLE_LABELS[normalizeRole(newRole)] || newRole}`);
   };
 
   const handleSeedReset = async () => {
@@ -111,6 +113,8 @@ export function Header({ onToggleSidebar }: HeaderProps) {
       toast.error("Failed to reset database");
     }
   };
+
+  const profileHref = isPatient ? "/patient/profile" : "/profile";
 
   return (
     <>
@@ -139,40 +143,28 @@ export function Header({ onToggleSidebar }: HeaderProps) {
 
         {/* Right Side Controls */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Quick Action Button */}
-          <button
-            onClick={() => setQuickActionOpen(true)}
-            className="hidden items-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-600 to-teal-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:from-brand-700 hover:to-teal-700 transition-all sm:flex"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            <span>Quick Action</span>
-          </button>
-
-          {/* Re-seed demo database button */}
-          <button
-            onClick={handleSeedReset}
-            title="Reset Demo Data"
-            className="hidden items-center gap-1 rounded-xl border border-slate-200 p-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 md:flex dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800"
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-            <span className="text-[11px]">Reset Data</span>
-          </button>
-
-          {/* Demo Role Switcher */}
-          <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
-            <Shield className="h-3.5 w-3.5 text-brand-600 dark:text-brand-400 ml-1.5 hidden sm:block" />
-            <select
-              value={role}
-              onChange={(e) => handleRoleChange(e.target.value as UserRole)}
-              className="bg-transparent text-xs font-semibold text-slate-700 outline-none cursor-pointer dark:text-slate-300 px-1"
+          {/* Quick Action Button for staff */}
+          {!isPatient && (
+            <button
+              onClick={() => setQuickActionOpen(true)}
+              className="hidden items-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-600 to-teal-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:from-brand-700 hover:to-teal-700 transition-all sm:flex"
             >
-              {roleOptions.map((opt) => (
-                <option key={opt.value} value={opt.value} className="dark:bg-slate-900 text-slate-900 dark:text-white">
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
+              <Plus className="h-3.5 w-3.5" />
+              <span>Quick Action</span>
+            </button>
+          )}
+
+          {/* Re-seed demo database button (Dev/Admin) */}
+          {isAdmin && (
+            <button
+              onClick={handleSeedReset}
+              title="Reset Demo Data"
+              className="hidden items-center gap-1 rounded-xl border border-slate-200 p-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 md:flex dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800"
+            >
+              <RefreshCw className="h-3.5 w-3.5" />
+              <span className="text-[11px]">Reset Data</span>
+            </button>
+          )}
 
           {/* Notification Bell */}
           <div className="relative">
@@ -264,29 +256,43 @@ export function Header({ onToggleSidebar }: HeaderProps) {
                 <p className="text-xs font-bold text-slate-800 dark:text-white leading-tight">
                   {user?.name || "Dr. Alexander Wright"}
                 </p>
-                <p className="text-[10px] font-semibold text-brand-600 dark:text-brand-400 capitalize">
-                  {role.replace("_", " ")}
+                <p className="text-[10px] font-semibold text-brand-600 dark:text-brand-400">
+                  {ROLE_LABELS[role] || role}
                 </p>
               </div>
               <ChevronDown className="h-3.5 w-3.5 text-slate-400 hidden sm:block" />
             </button>
 
             {userDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-52 rounded-2xl border border-slate-100 bg-white p-2 shadow-xl dark:border-slate-800 dark:bg-slate-900 z-50 animate-in fade-in zoom-in-95">
+              <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-slate-100 bg-white p-2 shadow-xl dark:border-slate-800 dark:bg-slate-900 z-50 animate-in fade-in zoom-in-95">
                 <div className="border-b border-slate-100 px-3 py-2 dark:border-slate-800">
                   <p className="text-xs font-bold text-slate-900 dark:text-white">
                     {user?.name}
                   </p>
-                  <p className="text-[11px] text-slate-400">{user?.email}</p>
+                  <p className="text-[11px] text-slate-400 truncate">{user?.email}</p>
+                  <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300">
+                    {ROLE_LABELS[role] || role}
+                  </span>
                 </div>
                 <div className="pt-1">
                   <Link
-                    href="/settings"
+                    href={profileHref}
                     onClick={() => setUserDropdownOpen(false)}
                     className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
                   >
-                    Hospital Settings
+                    <UserCheck className="h-3.5 w-3.5 text-slate-400" />
+                    <span>My Profile</span>
                   </Link>
+                  {isAdmin && (
+                    <Link
+                      href="/settings"
+                      onClick={() => setUserDropdownOpen(false)}
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                    >
+                      <Settings className="h-3.5 w-3.5 text-slate-400" />
+                      <span>Hospital Settings</span>
+                    </Link>
+                  )}
                   <button
                     onClick={() => {
                       setUserDropdownOpen(false);
@@ -295,7 +301,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
                     className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40"
                   >
                     <LogOut className="h-3.5 w-3.5" />
-                    <span>Log Out</span>
+                    <span>Sign Out</span>
                   </button>
                 </div>
               </div>

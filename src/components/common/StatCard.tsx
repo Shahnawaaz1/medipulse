@@ -6,11 +6,16 @@ interface StatCardProps {
   title: string;
   value: string | number;
   subtitle?: string;
-  icon: LucideIcon;
-  trend?: {
-    value: string;
-    isPositive?: boolean;
-  };
+  change?: string;
+  icon: LucideIcon | any;
+  trend?:
+    | {
+        value: string;
+        isPositive?: boolean;
+      }
+    | "up"
+    | "down"
+    | "neutral";
   colorScheme?: "blue" | "teal" | "emerald" | "amber" | "rose" | "indigo" | "purple";
   className?: string;
 }
@@ -57,12 +62,26 @@ export function StatCard({
   title,
   value,
   subtitle,
+  change,
   icon: Icon,
   trend,
   colorScheme = "blue",
   className,
 }: StatCardProps) {
   const scheme = colorMap[colorScheme] || colorMap.blue;
+
+  const displaySubtitle = subtitle || change;
+
+  const isPositive =
+    typeof trend === "object"
+      ? trend.isPositive
+      : trend === "up"
+      ? true
+      : trend === "down"
+      ? false
+      : undefined;
+
+  const trendText = typeof trend === "object" ? trend.value : undefined;
 
   return (
     <div
@@ -81,19 +100,19 @@ export function StatCard({
             <span className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
               {value}
             </span>
-            {trend && (
+            {trendText && (
               <span
                 className={cn(
                   "inline-flex items-center text-xs font-medium",
-                  trend.isPositive ? "text-emerald-600" : "text-rose-600"
+                  isPositive ? "text-emerald-600" : "text-rose-600"
                 )}
               >
-                {trend.isPositive ? "↑" : "↓"} {trend.value}
+                {isPositive ? "↑" : "↓"} {trendText}
               </span>
             )}
           </div>
-          {subtitle && (
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{subtitle}</p>
+          {displaySubtitle && (
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{displaySubtitle}</p>
           )}
         </div>
         <div className={cn("flex h-12 w-12 items-center justify-center rounded-xl p-2.5", scheme.bg)}>

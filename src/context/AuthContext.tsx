@@ -1,16 +1,35 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { IUser, UserRole } from "@/types";
+import { IUser, StandardRole, UserRole } from "@/types";
 import { useRouter } from "next/navigation";
+import {
+  normalizeRole,
+  hasPermission as checkPerm,
+  canAccessRoute as checkRoute,
+  Permission,
+  getDefaultDashboard,
+} from "@/lib/permissions";
 
 interface AuthContextType {
   user: IUser | null;
-  role: UserRole;
+  role: StandardRole;
   loading: boolean;
-  login: (email: string, pass: string) => Promise<boolean>;
+  login: (
+    identifier: string,
+    pass: string
+  ) => Promise<{ success: boolean; error?: string; defaultDashboard?: string }>;
+  registerPatient: (
+    data: any
+  ) => Promise<{ success: boolean; error?: string; defaultDashboard?: string }>;
   switchRole: (newRole: UserRole) => Promise<void>;
   logout: () => Promise<void>;
+  hasPermission: (permission: Permission) => boolean;
+  canAccess: (path: string) => boolean;
+  isStaff: boolean;
+  isPatient: boolean;
+  isAdmin: boolean;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,26 +45,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch("/api/auth/me");
       if (res.ok) {
         const data = await res.json();
-        setUser(data.user);
+        if (data.authenticated && data.user) {
+          setUser(data.user);
+        } else {
+          setUser(null);
+        }
       } else {
-        // Default guest/admin user fallback for immediate seamless usage
-        setUser({
-          name: "Dr. Alexander Wright",
-          email: "admin@hospital.com",
-          role: "super_admin",
-          department: "Administration",
-          status: "active",
-          avatar: "https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=150&auto=format&fit=crop&q=80",
-        });
+        setUser(null);
       }
     } catch {
-      setUser({
-        name: "Dr. Alexander Wright",
-        email: "admin@hospital.com",
-        role: "super_admin",
-        department: "Administration",
-        status: "active",
-      });
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -55,21 +64,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     fetchCurrentUser();
   }, []);
 
-  const login = async (email: string, pass: string): Promise<boolean> => {
+  const login = async (
+    identifier: string,
+    pass: string
+  ): Promise<{ success: boolean; error?: string; defaultDashboard?: string }> => {
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password: pass }),
+        body: JSON.stringify({ identifier, password: pass }),
       });
-      if (res.ok) {
-        const data = await res.json();
+      const data = await res.json();
+      if (res.ok && data.success) {
         setUser(data.user);
-        return true;
+        return {
+          success: true,
+          defaultDashboard: data.defaultDashboard || getDefaultDashboard(data.user.role),
+        };
       }
-      return false;
-    } catch {
-      return false;
+      return { success: false, error: data.error || "Authentication failed" };
+    } catch (err: any) {
+      return { success: false, error: err.message || "Network error during authentication" };
+    }
+  };
+
+  const registerPatient = async (
+    patientData: any
+  ): Promise<{ success: boolean; error?: string; defaultDashboard?: string }> => {
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patientData),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setUser(data.user);
+        return {
+          success: true,
+          defaultDashboard: data.defaultDashboard || "/patient/dashboard",
+        };
+      }
+      return { success: false, error: data.error || "Registration failed" };
+    } catch (err: any) {
+      return { success: false, error: err.message || "Network error during registration" };
     }
   };
 
@@ -84,6 +122,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (res.ok) {
         const data = await res.json();
         setUser(data.user);
+        const dashboard = data.defaultDashboard || getDefaultDashboard(data.user.role);
+        router.push(dashboard);
       }
     } catch (e) {
       console.error("Failed to switch role:", e);
@@ -103,15 +143,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const currentRole: StandardRole = user ? normalizeRole(user.role) : "PATIENT";
+
+  const hasPermission = (permission: Permission): boolean => {
+    if (!user) return false;
+    return checkPerm(user.role, permission);
+  };
+
+  const canAccess = (path: string): boolean => {
+    if (!user) return false;
+    return checkRoute(user.role, path);
+  };
+
+  const isStaff = user ? currentRole !== "PATIENT" : false;
+  const isPatient = user ? currentRole === "PATIENT" : false;
+  const isAdmin = user ? currentRole === "SUPER_ADMIN" || currentRole === "ADMIN" : false;
+
   return (
     <AuthContext.Provider
       value={{
         user,
-        role: (user?.role as UserRole) || "super_admin",
+        role: currentRole,
         loading,
         login,
+        registerPatient,
         switchRole,
         logout,
+        hasPermission,
+        canAccess,
+        isStaff,
+        isPatient,
+        isAdmin,
+        refreshUser: fetchCurrentUser,
       }}
     >
       {children}

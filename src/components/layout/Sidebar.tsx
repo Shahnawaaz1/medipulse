@@ -31,21 +31,28 @@ import {
   X,
   HeartPulse,
   Share2,
+  FileSpreadsheet,
+  CreditCard,
+  FolderHeart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
+import { canAccessRoute, getDefaultDashboard, ROLE_LABELS } from "@/lib/permissions";
+
+interface NavItem {
+  name: string;
+  href: string;
+  icon: any;
+  badge?: string;
+  badgeColor?: string;
+}
 
 interface NavGroup {
   title: string;
-  items: {
-    name: string;
-    href: string;
-    icon: any;
-    badge?: string;
-    badgeColor?: string;
-  }[];
+  items: NavItem[];
 }
 
-const navigationGroups: NavGroup[] = [
+const allHospitalNavigationGroups: NavGroup[] = [
   {
     title: "MAIN & OVERVIEW",
     items: [
@@ -148,6 +155,41 @@ const navigationGroups: NavGroup[] = [
   },
 ];
 
+const patientNavigationGroups: NavGroup[] = [
+  {
+    title: "PATIENT PORTAL",
+    items: [
+      { name: "My Health Dashboard", href: "/patient/dashboard", icon: LayoutDashboard },
+      { name: "My Appointments & Booking", href: "/patient/appointments", icon: Calendar },
+      { name: "My Prescriptions", href: "/patient/prescriptions", icon: FileText },
+      { name: "My Lab & Radiology Reports", href: "/patient/reports", icon: FlaskConical },
+      { name: "My Medical Records", href: "/patient/records", icon: FolderHeart },
+      { name: "My Bills & Invoices", href: "/patient/invoices", icon: CreditCard },
+      { name: "My Profile & Details", href: "/patient/profile", icon: UserCheck },
+    ],
+  },
+  {
+    title: "CONNECTED SERVICES",
+    items: [
+      {
+        name: "ABHA Health Card (ABDM)",
+        href: "/abha",
+        icon: QrCode,
+        badge: "Govt ID",
+        badgeColor: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
+      },
+      {
+        name: "Doctor Teleconsultation",
+        href: "/teleconsultation",
+        icon: Video,
+        badge: "Live Call",
+        badgeColor: "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300",
+      },
+      { name: "Public Hospital Website", href: "/", icon: Globe },
+    ],
+  },
+];
+
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
@@ -155,6 +197,53 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const { user, role, isPatient, isAdmin } = useAuth();
+
+  // Pick navigation structure based on role
+  let navGroupsToRender: NavGroup[] = [];
+
+  if (isPatient) {
+    navGroupsToRender = patientNavigationGroups;
+  } else if (isAdmin) {
+    navGroupsToRender = allHospitalNavigationGroups;
+  } else {
+    // Filter hospital groups for specific staff role
+    navGroupsToRender = allHospitalNavigationGroups
+      .map((group) => {
+        const filteredItems = group.items.filter((item) => {
+          if (item.href === "/") return true;
+          return canAccessRoute(role, item.href);
+        });
+        return {
+          ...group,
+          items: filteredItems,
+        };
+      })
+      .filter((group) => group.items.length > 0);
+
+    // Prepend role dashboard if not present in main list
+    const roleDashboardUrl = getDefaultDashboard(role);
+    if (roleDashboardUrl && roleDashboardUrl !== "/dashboard") {
+      const roleName = ROLE_LABELS[role] || "Staff";
+      const dashboardItem: NavItem = {
+        name: `${roleName} Dashboard`,
+        href: roleDashboardUrl,
+        icon: LayoutDashboard,
+        badge: "Active Role",
+        badgeColor: "bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300",
+      };
+
+      navGroupsToRender = [
+        {
+          title: "ROLE WORKSPACE",
+          items: [dashboardItem],
+        },
+        ...navGroupsToRender,
+      ];
+    }
+  }
+
+  const brandLink = isPatient ? "/patient/dashboard" : getDefaultDashboard(role);
 
   return (
     <>
@@ -175,7 +264,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       >
         {/* Brand Header */}
         <div className="flex h-16 items-center justify-between border-b border-slate-100 px-6 dark:border-slate-800">
-          <Link href="/dashboard" className="flex items-center gap-2.5">
+          <Link href={brandLink} className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-brand-600 to-teal-500 text-white shadow-md shadow-brand-500/20">
               <HeartPulse className="h-5 w-5 animate-pulse" />
             </div>
@@ -184,7 +273,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 Medi<span className="text-brand-600 dark:text-brand-400">Pulse</span>
               </span>
               <span className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                Hospital System
+                {isPatient ? "Patient Portal" : "Hospital System"}
               </span>
             </div>
           </Link>
@@ -196,18 +285,30 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </button>
         </div>
 
+        {/* Role identification banner */}
+        <div className="px-4 pt-3">
+          <div className="flex items-center gap-2 rounded-xl bg-slate-100 px-3 py-1.5 text-[11px] font-semibold text-slate-700 dark:bg-slate-800/80 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="font-bold text-slate-900 dark:text-white">
+              {ROLE_LABELS[role] || "User"}:
+            </span>
+            <span className="truncate">{user?.name || "Dr. Alexander Wright"}</span>
+          </div>
+        </div>
+
         {/* Navigation scrollable items */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6 custom-scrollbar">
-          {navigationGroups.map((group, groupIdx) => (
+        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-5 custom-scrollbar">
+          {navGroupsToRender.map((group, groupIdx) => (
             <div key={groupIdx}>
-              <p className="px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                 {group.title}
               </p>
-              <div className="mt-2 space-y-1">
+              <div className="mt-1.5 space-y-1">
                 {group.items.map((item) => {
                   const isActive =
                     pathname === item.href ||
                     (item.href !== "/dashboard" &&
+                      item.href !== "/patient/dashboard" &&
                       item.href !== "/" &&
                       !item.href.includes("?") &&
                       pathname.startsWith(item.href));
@@ -226,7 +327,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                       className={cn(
                         "group flex items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-all duration-150",
                         isActive
-                          ? "bg-brand-50 text-brand-700 shadow-sm dark:bg-brand-950/60 dark:text-brand-300"
+                          ? "bg-brand-50 text-brand-700 shadow-sm dark:bg-brand-950/60 dark:text-brand-300 font-bold"
                           : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-200"
                       )}
                     >
@@ -245,7 +346,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                         <span
                           className={cn(
                             "rounded-full px-2 py-0.5 text-[10px] font-bold",
-                            item.badgeColor || "bg-teal-100 text-teal-700 dark:bg-teal-900/60 dark:text-teal-300"
+                            item.badgeColor ||
+                              "bg-teal-100 text-teal-700 dark:bg-teal-900/60 dark:text-teal-300"
                           )}
                         >
                           {item.badge}

@@ -3,6 +3,7 @@ import connectToDatabase from "@/lib/db";
 import RadiologyOrder from "@/models/RadiologyOrder";
 import Notification from "@/models/Notification";
 import Patient from "@/models/Patient";
+import { getPatientScope } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   try {
@@ -12,6 +13,25 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get("status") || "";
 
     const query: any = {};
+    const patientScope = getPatientScope(req);
+
+    // Patient Data Isolation
+    if (patientScope.isPatient) {
+      let patientDoc = null;
+      if (patientScope.patientId) {
+        patientDoc = await Patient.findOne({ patientId: patientScope.patientId });
+      }
+      if (!patientDoc && patientScope.patientEmail) {
+        patientDoc = await Patient.findOne({ email: patientScope.patientEmail.toLowerCase() });
+      }
+
+      if (patientDoc) {
+        query.patient = patientDoc._id;
+      } else {
+        return NextResponse.json({ success: true, orders: [] });
+      }
+    }
+
     if (modality) query.modality = modality;
     if (status) query.status = status;
 

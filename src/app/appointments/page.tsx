@@ -116,24 +116,49 @@ export default function AppointmentsPage() {
 
   const handleBookAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.patient) {
+      toast.error("Please select a patient for the appointment.");
+      return;
+    }
+    if (!formData.doctor) {
+      toast.error("Please select a specialist doctor.");
+      return;
+    }
+
+    const payload = {
+      ...formData,
+      department: formData.department || doctors.find((d) => d._id === formData.doctor)?.department || "General Medicine",
+      reason: formData.reason.trim() || "General Consultation",
+    };
+
     try {
       setSubmitting(true);
       const res = await fetch("/api/appointments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
-      if (res.ok) {
+      const json = await res.json();
+      if (res.ok && json.success) {
         toast.success("Appointment booked successfully!");
         setIsBookModalOpen(false);
+        setFormData({
+          patient: patients[0]?._id || "",
+          doctor: doctors[0]?._id || "",
+          department: doctors[0]?.department || "General Medicine",
+          appointmentDate: new Date().toISOString().split("T")[0],
+          timeSlot: timeSlots[0],
+          type: "General",
+          reason: "",
+          status: "Scheduled",
+        });
         fetchData();
       } else {
-        const err = await res.json();
-        toast.error(err.error || "Failed to book appointment");
+        toast.error(json.error || "Failed to book appointment");
       }
     } catch {
-      toast.error("An error occurred");
+      toast.error("An error occurred while booking the appointment");
     } finally {
       setSubmitting(false);
     }

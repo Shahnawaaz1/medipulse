@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db";
 import Patient from "@/models/Patient";
+import User from "@/models/User";
+import bcrypt from "bcryptjs";
+import { getUserFromRequest, getPatientScope } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   try {
@@ -11,18 +14,31 @@ export async function GET(req: NextRequest) {
     const bloodGroup = searchParams.get("bloodGroup") || "";
     const status = searchParams.get("status") || "";
 
+    const patientScope = getPatientScope(req);
     const query: any = {};
-    if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { patientId: { $regex: search, $options: "i" } },
-        { phone: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-      ];
+
+    // Patient Data Isolation: A patient can ONLY fetch their own patient record
+    if (patientScope.isPatient) {
+      if (patientScope.patientId) {
+        query.patientId = patientScope.patientId;
+      } else if (patientScope.patientEmail) {
+        query.email = patientScope.patientEmail.toLowerCase();
+      } else {
+        return NextResponse.json({ success: true, patients: [] });
+      }
+    } else {
+      if (search) {
+        query.$or = [
+          { name: { $regex: search, $options: "i" } },
+          { patientId: { $regex: search, $options: "i" } },
+          { phone: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+        ];
+      }
+      if (gender) query.gender = gender;
+      if (bloodGroup) query.bloodGroup = bloodGroup;
+      if (status) query.status = status;
     }
-    if (gender) query.gender = gender;
-    if (bloodGroup) query.bloodGroup = bloodGroup;
-    if (status) query.status = status;
 
     const patients = await Patient.find(query).sort({ createdAt: -1 });
     return NextResponse.json({ success: true, patients });
@@ -43,6 +59,24 @@ export async function POST(req: NextRequest) {
     }
 
     const newPatient = await Patient.create(body);
+
+    // If registered by staff and has email, ensure User portal account exists
+    if (body.email && body.createPortalAccount) {
+      const existing = await User.findOne({ email: body.email.toLowerCase() });
+      if (!existing) {
+        const hashedPassword = await bcrypt.hash("Patient@123", 10);
+        await User.create({
+          name: body.name,
+          email: body.email.toLowerCase(),
+          password: hashedPassword,
+          role: "PATIENT",
+          phone: body.phone,
+          patientId: newPatient.patientId,
+          status: "active",
+        });
+      }
+    }
+
     return NextResponse.json({ success: true, patient: newPatient }, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 400 });

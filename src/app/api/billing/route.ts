@@ -3,6 +3,7 @@ import connectToDatabase from "@/lib/db";
 import Invoice from "@/models/Invoice";
 import Notification from "@/models/Notification";
 import Patient from "@/models/Patient";
+import { getPatientScope } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   try {
@@ -10,8 +11,34 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status") || "";
     const search = searchParams.get("search") || "";
+    const patientParam = searchParams.get("patient") || "";
 
     const query: any = {};
+    const patientScope = getPatientScope(req);
+
+    // Patient Data Isolation
+    if (patientScope.isPatient) {
+      let patientDoc = null;
+      if (patientScope.patientId) {
+        patientDoc = await Patient.findOne({ patientId: patientScope.patientId });
+      }
+      if (!patientDoc && patientScope.patientEmail) {
+        patientDoc = await Patient.findOne({ email: patientScope.patientEmail.toLowerCase() });
+      }
+
+      if (patientDoc) {
+        query.patient = patientDoc._id;
+      } else {
+        return NextResponse.json({
+          success: true,
+          invoices: [],
+          summary: { totalBilled: 0, totalCollected: 0, totalPending: 0, count: 0 },
+        });
+      }
+    } else {
+      if (patientParam) query.patient = patientParam;
+    }
+
     if (status) query.paymentStatus = status;
 
     const invoices = await Invoice.find(query)
@@ -89,7 +116,7 @@ export async function POST(req: NextRequest) {
     if (body.paymentStatus === "Paid") {
       await Notification.create({
         title: "Invoice Paid",
-        message: `Payment of $${body.paidAmount} received for invoice ${body.invoiceNumber} (${patientDoc ? patientDoc.name : "Patient"}).`,
+        message: `Payment of ₹${body.paidAmount} received for invoice ${body.invoiceNumber} (${patientDoc ? patientDoc.name : "Patient"}).`,
         type: "success",
         link: "/billing",
         read: false,
