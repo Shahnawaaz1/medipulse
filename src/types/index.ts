@@ -497,3 +497,384 @@ export interface IReferral {
   createdAt?: string;
   updatedAt?: string;
 }
+
+// ----------------- EMERGENCY & CASUALTY -----------------
+export type TriagePriority = "Critical" | "High" | "Medium" | "Low";
+export type EmergencyStatus =
+  | "Registered"
+  | "Triaged"
+  | "Under Assessment"
+  | "Treatment"
+  | "Observation"
+  | "Admitted"
+  | "Discharged"
+  | "Referred"
+  | "Transferred"
+  | "LAMA";
+
+export interface IEmergencyCase {
+  _id?: string;
+  emergencyId: string;
+  patient?: IPatient | string;
+  temporaryPatientName?: string;
+  temporaryAge?: number;
+  temporaryGender?: string;
+  arrivalTime: string;
+  arrivalMode: "Ambulance" | "Walk-in" | "Referral" | "Police";
+  broughtBy: string;
+  emergencyContactPhone: string;
+  chiefComplaint: string;
+  initialCondition: string;
+  triagePriority: TriagePriority;
+  vitalSigns: {
+    bp: string;
+    pulse: string;
+    temperature: string;
+    spo2: string;
+    respiratoryRate?: string;
+  };
+  painScore: number; // 1 to 10
+  consciousness: "Alert" | "Voice" | "Pain" | "Unresponsive";
+  assignedDoctor?: IDoctor | string;
+  assignedNurse?: string;
+  traumaBay?: string;
+  treatmentNotes?: string;
+  medicationsAdministered?: string[];
+  investigationsOrdered?: string[];
+  status: EmergencyStatus;
+  disposition?: "Discharged" | "Admitted" | "Referred" | "Transferred" | "Left Against Medical Advice";
+  dispositionNotes?: string;
+  dispositionTime?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// ----------------- ICU MANAGEMENT -----------------
+export interface IIcuRecord {
+  _id?: string;
+  icuId: string;
+  admission: IAdmission | string;
+  patient: IPatient | string;
+  bed: IBed | string;
+  unit: "MICU" | "SICU" | "CCU" | "NICU" | "PICU";
+  ventilatorStatus: "None" | "Invasive Mechanical" | "Non-Invasive (NIV)" | "CPAP" | "BiPAP" | "High Flow Nasal Cannula" | "Room Air";
+  ventilatorSettings?: {
+    mode?: string;
+    fio2?: string;
+    peep?: string;
+    tidalVolume?: string;
+    pip?: string;
+  };
+  telemetryVitals: Array<{
+    timestamp: string;
+    heartRate: number;
+    bpSystolic: number;
+    bpDiastolic: number;
+    spo2: number;
+    temperature: number;
+    respiratoryRate: number;
+    cpcOrGcs?: number;
+  }>;
+  inotropesAndInfusions?: Array<{
+    drug: string;
+    dosage: string;
+    rate: string;
+    startedAt: string;
+  }>;
+  criticalAlerts?: Array<{
+    timestamp: string;
+    alertType: "Arrythmia" | "Desaturation" | "Hypotension" | "High Peak Pressure" | "Bradycardia";
+    severity: "High" | "Critical";
+    resolved: boolean;
+  }>;
+  attendingIntensivist?: IDoctor | string;
+  assignedNurse?: string;
+  dailyNotes?: string;
+  status: "Active" | "Transferred to Ward" | "Discharged" | "Deceased";
+  admittedAt: string;
+  transferredAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// ----------------- OPERATION THEATRE (OT) -----------------
+export type OtSurgeryStatus = "Scheduled" | "Pre-Op" | "In Progress" | "Recovery" | "Completed" | "Cancelled";
+
+export interface IOperationTheatre {
+  _id?: string;
+  otScheduleId: string;
+  theatreNumber: string; // e.g., "OT Suite 1 (Cardiothoracic)"
+  patient: IPatient | string;
+  admission?: IAdmission | string;
+  leadSurgeon: IDoctor | string;
+  assistantSurgeon?: IDoctor | string;
+  anesthetist?: IDoctor | string;
+  scrubNurse?: string;
+  procedureName: string;
+  specialty: string;
+  scheduledDate: string;
+  startTime: string;
+  endTime: string;
+  actualStartTime?: string;
+  actualEndTime?: string;
+  anesthesiaType: "General" | "Spinal" | "Epidural" | "Local" | "Regional Nerve Block" | "Sedation";
+  preOpChecklist: {
+    consentSigned: boolean;
+    npoStatusVerified: boolean;
+    bloodCrossmatched: boolean;
+    anesthesiaCleared: boolean;
+    siteMarked: boolean;
+  };
+  surgeryStatus: OtSurgeryStatus;
+  surgicalFindings?: string;
+  postOpNotes?: string;
+  bloodUnitsUsed?: number;
+  implantsUsed?: string[];
+  pacuScore?: number; // Aldrete Recovery Score
+  status?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// ----------------- ADVANCED NURSING CARE -----------------
+export interface INursingCare {
+  _id?: string;
+  patient: IPatient | string;
+  admission: IAdmission | string;
+  nurse: string;
+  shift: "Morning" | "Evening" | "Night";
+  date: string;
+  carePlan: string[];
+  medicationAdministration: Array<{
+    medicineName: string;
+    dosage: string;
+    route: string;
+    scheduledTime: string;
+    administeredTime?: string;
+    status: "Due" | "Administered" | "Held" | "Refused";
+    givenBy?: string;
+    notes?: string;
+  }>;
+  intakeOutput: {
+    oralIntakeMl: number;
+    ivFluidsMl: number;
+    totalIntakeMl: number;
+    urineOutputMl: number;
+    drainOutputMl: number;
+    totalOutputMl: number;
+    fluidBalanceMl: number;
+  };
+  vitals: Array<{
+    time: string;
+    bp: string;
+    pulse: string;
+    temp: string;
+    spo2: string;
+    sugar?: string;
+    painLevel: number;
+    recordedBy: string;
+  }>;
+  nursingAlerts: string[];
+  shiftHandoverNotes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// ----------------- DISCHARGE SUMMARY -----------------
+export interface IDischargeSummary {
+  _id?: string;
+  dischargeId: string;
+  admission: IAdmission | string;
+  patient: IPatient | string;
+  attendingDoctor: IDoctor | string;
+  department: string;
+  admissionDate: string;
+  dischargeDate: string;
+  dischargeType: "Normal / Cured" | "Against Medical Advice (LAMA)" | "Transfer to Higher Center" | "Deceased";
+  finalDiagnosis: string;
+  icd10Code?: string;
+  clinicalSummary: string;
+  hospitalCourse: string;
+  proceduresPerformed: string[];
+  investigationsSummary: string;
+  dischargeMedicines: Array<{
+    medicineName: string;
+    dosage: string;
+    frequency: string;
+    duration: string;
+    instructions: string;
+  }>;
+  dietAndActivityAdvice: string;
+  followUpDate: string;
+  emergencyInstructions: string;
+  billingClearance: {
+    isCleared: boolean;
+    clearedAt?: string;
+    invoiceNumber?: string;
+  };
+  doctorSignature?: string;
+  status: "Draft" | "Finalized" | "Printed";
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// ----------------- PROCUREMENT & PURCHASE ORDERS -----------------
+export interface IPurchaseOrderItem {
+  itemId?: string;
+  itemCode: string;
+  name: string;
+  category: string;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
+  total: number;
+}
+
+export interface IPurchaseOrder {
+  _id?: string;
+  poNumber: string;
+  supplierName: string;
+  supplierContact: string;
+  items: IPurchaseOrderItem[];
+  subtotal: number;
+  tax: number;
+  totalAmount: number;
+  orderDate: string;
+  expectedDeliveryDate: string;
+  status: "Draft" | "Requested" | "Approved" | "PO Issued" | "Goods Received" | "Invoiced" | "Paid" | "Cancelled";
+  goodsReceivedDate?: string;
+  requestedBy: string;
+  approvedBy?: string;
+  paymentStatus: "Unpaid" | "Partially Paid" | "Paid";
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// ----------------- AUDIT LOGS -----------------
+export type AuditAction =
+  | "LOGIN"
+  | "LOGOUT"
+  | "CREATE"
+  | "UPDATE"
+  | "DELETE"
+  | "ACCESS_RECORD"
+  | "DISPENSE"
+  | "ADMIT"
+  | "DISCHARGE"
+  | "TRIAGE"
+  | "SURGERY_SCHEDULE"
+  | "STATUS_CHANGE";
+
+export type AuditModule =
+  | "AUTH"
+  | "PATIENT"
+  | "EMERGENCY"
+  | "ICU"
+  | "OT"
+  | "OPD"
+  | "IPD"
+  | "NURSING"
+  | "PHARMACY"
+  | "LABORATORY"
+  | "RADIOLOGY"
+  | "BILLING"
+  | "INVENTORY"
+  | "PROCUREMENT"
+  | "STAFF"
+  | "SETTINGS"
+  | "REFERRAL";
+
+export interface IAuditLog {
+  _id?: string;
+  userId?: string;
+  userName: string;
+  userRole: string;
+  action: AuditAction;
+  module: AuditModule;
+  recordId?: string;
+  recordTitle?: string;
+  details: string;
+  diffSummary?: string;
+  ipAddress?: string;
+  userAgent?: string;
+  status: "SUCCESS" | "WARNING" | "FAILED";
+  timestamp: string;
+  createdAt?: string;
+}
+
+export interface ITeleconsultationSession {
+  _id?: string;
+  sessionId: string;
+  roomId: string;
+  appointment?: any;
+  patient: any;
+  doctor: any;
+  scheduledDate?: string;
+  scheduledTime?: string;
+  actualStartTime?: string;
+  actualEndTime?: string;
+  durationSeconds?: number;
+  sessionStatus:
+    | "Scheduled"
+    | "Waiting Room"
+    | "Doctor Joined"
+    | "Patient Joined"
+    | "In Consultation"
+    | "Completed"
+    | "Cancelled"
+    | "No Show";
+  connectionStatus:
+    | "Idle"
+    | "Connecting"
+    | "Connected"
+    | "Disconnected"
+    | "Reconnecting"
+    | "Failed";
+  doctorNotes?: {
+    chiefComplaint?: string;
+    historyOfPresentIllness?: string;
+    symptoms?: string;
+    clinicalObservations?: string;
+    assessment?: string;
+    diagnosis?: string;
+    treatmentPlan?: string;
+    additionalNotes?: string;
+  };
+  prescription?: any;
+  prescriptionSummary?: {
+    prescriptionId: string;
+    medicines: Array<{
+      medicineName: string;
+      genericName?: string;
+      strength?: string;
+      dosage: string;
+      route?: string;
+      frequency: string;
+      duration: string;
+      quantity?: string;
+      instructions: string;
+    }>;
+    labAdvice?: string[];
+    followUpDate?: string;
+    isDigitallySigned?: boolean;
+    signedBy?: string;
+    signedAt?: string;
+    signatureMetadata?: any;
+  };
+  chatMessages: Array<{
+    id: string;
+    sender: string;
+    senderRole: "Doctor" | "Patient" | string;
+    text: string;
+    timestamp: string;
+  }>;
+  cdsAlertsAcknowledged?: string[];
+  followUpDate?: string;
+  isSigned?: boolean;
+  signedByDoctorName?: string;
+  signedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+

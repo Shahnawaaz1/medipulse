@@ -48,8 +48,6 @@ export default function PharmacyDashboardPage() {
     loadPharmacyData();
   }, []);
 
-  if (loading) return <LoadingSpinner />;
-
   const lowStock = medicines.filter((m) => (m.stockQuantity || 0) < 50);
   const pendingRx = prescriptions.slice(0, 6);
 

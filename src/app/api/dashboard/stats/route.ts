@@ -8,6 +8,14 @@ import Admission from "@/models/Admission";
 import Invoice from "@/models/Invoice";
 import OpdRecord from "@/models/OpdRecord";
 
+import EmergencyCase from "@/models/EmergencyCase";
+import IcuRecord from "@/models/IcuRecord";
+import OperationTheatre from "@/models/OperationTheatre";
+import Medicine from "@/models/Medicine";
+import LabOrder from "@/models/LabOrder";
+import RadiologyOrder from "@/models/RadiologyOrder";
+import DischargeSummary from "@/models/DischargeSummary";
+
 export async function GET() {
   try {
     await connectToDatabase();
@@ -22,44 +30,66 @@ export async function GET() {
       activeDoctors,
       allAppointments,
       todayAppointments,
+      pendingAppointments,
+      completedAppointments,
       allBeds,
       occupiedBeds,
-      allInvoices,
+      financialAgg,
+      todayFinancialAgg,
       todayOpd,
+      activeEmergencyCases,
+      criticalEmergencyCases,
+      icuOccupiedCount,
+      surgeriesScheduledToday,
+      lowStockMedsCount,
+      pendingLabOrders,
+      pendingRadiologyOrders,
+      dischargesToday,
     ] = await Promise.all([
       Patient.countDocuments(),
       Patient.countDocuments({ status: "Inpatient" }),
       Patient.countDocuments({ status: "Outpatient" }),
       Doctor.countDocuments(),
       Doctor.countDocuments({ status: "Active" }),
-      Appointment.find().populate("patient doctor").sort({ createdAt: -1 }).limit(10),
+      Appointment.find().populate("patient doctor").sort({ createdAt: -1 }).limit(10).lean(),
       Appointment.countDocuments({ appointmentDate: today }),
+      Appointment.countDocuments({ status: { $in: ["Scheduled", "Confirmed"] } }),
+      Appointment.countDocuments({ status: "Completed" }),
       Bed.countDocuments(),
       Bed.countDocuments({ status: "Occupied" }),
-      Invoice.find(),
+      Invoice.aggregate([
+        {
+          $group: {
+            _id: null,
+            totalRevenue: { $sum: "$paidAmount" },
+            pendingPaymentTotal: { $sum: "$balanceAmount" },
+          },
+        },
+      ]),
+      Invoice.aggregate([
+        { $match: { invoiceDate: today } },
+        {
+          $group: {
+            _id: null,
+            todayRevenue: { $sum: "$paidAmount" },
+          },
+        },
+      ]),
       OpdRecord.countDocuments({ date: today }),
+      EmergencyCase.countDocuments({ status: { $nin: ["Discharged", "Admitted", "Referred", "Transferred", "LAMA"] } }),
+      EmergencyCase.countDocuments({ triagePriority: "Critical", status: { $nin: ["Discharged", "Admitted", "Referred", "Transferred", "LAMA"] } }),
+      IcuRecord.countDocuments({ status: "Active" }),
+      OperationTheatre.countDocuments({ surgeryStatus: { $in: ["Scheduled", "Pre-Op", "In Progress"] } }),
+      Medicine.countDocuments({ status: { $in: ["Low Stock", "Out of Stock"] } }),
+      LabOrder.countDocuments({ status: { $in: ["Ordered", "Sample Collected", "Processing"] } }),
+      RadiologyOrder.countDocuments({ status: { $in: ["Ordered", "Scheduled", "In Progress"] } }),
+      DischargeSummary.countDocuments(),
     ]);
 
-    // Compute financial metrics
-    let totalRevenue = 0;
-    let todayRevenue = 0;
-    let pendingPaymentTotal = 0;
-
-    allInvoices.forEach((inv) => {
-      totalRevenue += inv.paidAmount || 0;
-      pendingPaymentTotal += inv.balanceAmount || 0;
-      if (inv.invoiceDate === today) {
-        todayRevenue += inv.paidAmount || 0;
-      }
-    });
-
-    const pendingAppointments = await Appointment.countDocuments({
-      status: { $in: ["Scheduled", "Confirmed"] },
-    });
-
-    const completedAppointments = await Appointment.countDocuments({
-      status: "Completed",
-    });
+    // Compute financial metrics from aggregation results
+    const totalRevenue = financialAgg[0]?.totalRevenue || 0;
+    const pendingPaymentTotal = financialAgg[0]?.pendingPaymentTotal || 0;
+    const todayRevenue = todayFinancialAgg[0]?.todayRevenue || 0;
 
     // Generate monthly revenue trend with department breakdowns (last 6 months)
     const revenueAnalytics = [
@@ -100,6 +130,14 @@ export async function GET() {
         availableBeds,
         occupiedBeds,
         bedOccupancyRate,
+        activeEmergencyCases,
+        criticalEmergencyCases,
+        icuOccupiedCount,
+        surgeriesScheduledToday,
+        lowStockMedsCount,
+        pendingLabOrders,
+        pendingRadiologyOrders,
+        dischargesToday,
         totalRevenue,
         todayRevenue,
         pendingPaymentTotal,

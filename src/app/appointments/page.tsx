@@ -15,6 +15,8 @@ import {
   ChevronRight,
   List,
   CalendarDays,
+  Video,
+  Hospital,
 } from "lucide-react";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
@@ -52,6 +54,7 @@ export default function AppointmentsPage() {
     patient: "",
     doctor: "",
     department: "Cardiology",
+    consultationType: "In-Person" as "In-Person" | "Virtual Teleconsultation",
     appointmentDate: new Date().toISOString().split("T")[0],
     timeSlot: timeSlots[0],
     type: "General",
@@ -147,6 +150,7 @@ export default function AppointmentsPage() {
           patient: patients[0]?._id || "",
           doctor: doctors[0]?._id || "",
           department: doctors[0]?.department || "General Medicine",
+          consultationType: "In-Person",
           appointmentDate: new Date().toISOString().split("T")[0],
           timeSlot: timeSlots[0],
           type: "General",
@@ -316,6 +320,19 @@ export default function AppointmentsPage() {
                           <span className="font-semibold text-brand-600 dark:text-brand-400">
                             {apt.department}
                           </span>
+                          <div className="mt-1">
+                            {apt.consultationType === "Virtual Teleconsultation" || apt.type === "Teleconsultation" ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-sky-700 bg-sky-100 dark:bg-sky-950 dark:text-sky-300 px-2 py-0.5 rounded-full">
+                                <Video className="h-2.5 w-2.5" />
+                                <span>Virtual Teleconsult</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-teal-700 bg-teal-100 dark:bg-teal-950 dark:text-teal-300 px-2 py-0.5 rounded-full">
+                                <Hospital className="h-2.5 w-2.5" />
+                                <span>In-Person</span>
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-5 py-4">
                           <p className="font-semibold text-slate-800 dark:text-slate-200">
@@ -331,6 +348,15 @@ export default function AppointmentsPage() {
                         </td>
                         <td className="px-5 py-4 text-right">
                           <div className="flex items-center justify-end gap-1">
+                            {(apt.consultationType === "Virtual Teleconsultation" || apt.type === "Teleconsultation") && (
+                              <Link
+                                href={`/teleconsultation?room=${apt.teleconsultationSession?.roomId || `TEL-${apt.appointmentId?.replace("APT-", "")}`}&appointment=${apt.appointmentId}`}
+                                className="rounded-lg bg-sky-600 px-2 py-1 text-[11px] font-bold text-white hover:bg-sky-700 flex items-center gap-1 shadow-sm mr-1"
+                              >
+                                <Video className="h-3 w-3" />
+                                <span>Video Room</span>
+                              </Link>
+                            )}
                             {apt.status === "Scheduled" && (
                               <button
                                 onClick={() => handleStatusUpdate(apt._id, "Confirmed")}
@@ -442,6 +468,74 @@ export default function AppointmentsPage() {
         maxWidth="2xl"
       >
         <form onSubmit={handleBookAppointment} className="space-y-4 text-xs">
+          {/* Consultation Mode Selector */}
+          <div>
+            <label className="block font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+              Consultation Mode *
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() =>
+                  setFormData({
+                    ...formData,
+                    consultationType: "In-Person",
+                    type: "General",
+                  })
+                }
+                className={`p-3 rounded-2xl border text-left transition-all ${
+                  formData.consultationType === "In-Person"
+                    ? "border-teal-500 bg-teal-50/60 ring-2 ring-teal-500/30 dark:bg-teal-950/40 dark:border-teal-400"
+                    : "border-slate-200 hover:border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-800"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-300">
+                    <Hospital className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+                      🏥 In-Person Hospital Visit
+                    </h4>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                      Physical visit in hospital OPD cabin.
+                    </p>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setFormData({
+                    ...formData,
+                    consultationType: "Virtual Teleconsultation",
+                    type: "Teleconsultation",
+                  })
+                }
+                className={`p-3 rounded-2xl border text-left transition-all ${
+                  formData.consultationType === "Virtual Teleconsultation"
+                    ? "border-sky-500 bg-sky-50/60 ring-2 ring-sky-500/30 dark:bg-sky-950/40 dark:border-sky-400"
+                    : "border-slate-200 hover:border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-800"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300">
+                    <Video className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+                      💻 Virtual Teleconsultation
+                    </h4>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                      Remote video consultation in secure room.
+                    </p>
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
               <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
@@ -469,7 +563,7 @@ export default function AppointmentsPage() {
                 required
                 value={formData.doctor}
                 onChange={(e) => handleDoctorSelect(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-900 outline-none focus:border-brand-500 dark:border-slate-800 dark:bg-slate-800 dark:text-white"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-900 outline-none focus:border-brand-500 dark:border-slate-800 dark:bg-slate-800 dark:text-white font-medium"
               >
                 {doctors.map((d) => (
                   <option key={d._id} value={d._id}>
@@ -507,22 +601,6 @@ export default function AppointmentsPage() {
                     {slot}
                   </option>
                 ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Visit Type
-              </label>
-              <select
-                value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-900 outline-none focus:border-brand-500 dark:border-slate-800 dark:bg-slate-800 dark:text-white"
-              >
-                <option value="General">General Consultation</option>
-                <option value="Follow-up">Follow-up Visit</option>
-                <option value="Emergency">Emergency Evaluation</option>
-                <option value="Routine Checkup">Routine Checkup</option>
               </select>
             </div>
 

@@ -1314,7 +1314,8 @@ async function seed() {
       updatedAt: new Date(),
     },
   ];
-  await db.collection("admissions").insertMany(admissionsData);
+  const createdAdmissions = await db.collection("admissions").insertMany(admissionsData);
+  const admissionIds = Object.values(createdAdmissions.insertedIds);
 
   console.log("Creating Appointments (including Teleconsultations)...");
   const appointmentsData = [
@@ -1792,7 +1793,288 @@ async function seed() {
   ];
   await db.collection("referrals").insertMany(referralsData);
 
-  console.log("Database Seed completed successfully! All collections created and populated.");
+  console.log("Creating Emergency Cases...");
+  const emergencyCasesData = [
+    {
+      emergencyId: "EMG-2026-001",
+      patient: patientIds[0],
+      triageLevel: "Red (Resuscitation)",
+      chiefComplaint: "Acute crushing retrosternal chest pain, diaphoresis, radiating to left arm",
+      vitalsOnArrival: { bpSystolic: 175, bpDiastolic: 110, heartRate: 115, respiratoryRate: 24, spo2: 91, temperature: 98.8, gcs: 15 },
+      assignedDoctor: doctorIds[0],
+      primaryNurse: "Nurse Clara Oswald",
+      status: "Under Treatment",
+      triageScore: 1,
+      arrivalMode: "Ambulance",
+      initialTreatmentNotes: "12-lead ECG showed acute anterior wall STEMI. Immediate dual antiplatelet loading & transferred to Cath Lab for primary PCI.",
+      disposition: "Admit to ICU",
+      arrivedAt: new Date(Date.now() - 3600000),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      emergencyId: "EMG-2026-002",
+      patient: patientIds[2],
+      triageLevel: "Yellow (Urgent)",
+      chiefComplaint: "Suspected forearm fracture after accidental fall",
+      vitalsOnArrival: { bpSystolic: 110, bpDiastolic: 70, heartRate: 95, respiratoryRate: 20, spo2: 99, temperature: 98.9, gcs: 15 },
+      assignedDoctor: doctorIds[1],
+      primaryNurse: "Nurse Clara Oswald",
+      status: "Triage Completed",
+      triageScore: 3,
+      arrivalMode: "Walk-in",
+      initialTreatmentNotes: "Upper extremity immobilized with slab. Analgesia given. Sent to X-ray.",
+      disposition: "Admit to Ward",
+      arrivedAt: new Date(Date.now() - 7200000),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
+  ];
+  await db.collection("emergencycases").insertMany(emergencyCasesData);
+
+  console.log("Creating ICU Telemetry Records...");
+  const icuRecordsData = [
+    {
+      icuId: "ICU-REC-101",
+      admission: admissionIds[0],
+      patient: patientIds[0],
+      bed: bedIds[0],
+      unit: "CCU",
+      ventilatorStatus: "High Flow Nasal Cannula",
+      ventilatorSettings: { mode: "HFNC", fio2: "45%", peep: "N/A", tidalVolume: "N/A", pip: "N/A" },
+      telemetryVitals: [
+        { timestamp: new Date(Date.now() - 1800000), heartRate: 78, bpSystolic: 126, bpDiastolic: 82, spo2: 98, temperature: 98.4, respiratoryRate: 16, cpcOrGcs: 15 },
+        { timestamp: new Date(), heartRate: 74, bpSystolic: 124, bpDiastolic: 80, spo2: 99, temperature: 98.5, respiratoryRate: 16, cpcOrGcs: 15 },
+      ],
+      inotropesAndInfusions: [
+        { drug: "IV Heparin", dosage: "1000 IU/hr", rate: "2.0 mL/hr", startedAt: new Date(Date.now() - 86400000) },
+        { drug: "IV Nitroglycerin", dosage: "10 mcg/min", rate: "0.5 mL/hr", startedAt: new Date(Date.now() - 43200000) }
+      ],
+      criticalAlerts: [
+        { timestamp: new Date(Date.now() - 7200000), alertType: "Desaturation", severity: "High", resolved: true }
+      ],
+      attendingIntensivist: doctorIds[0],
+      assignedNurse: "Nurse Clara Oswald",
+      dailyNotes: "Post-PCI Day 2. Patient alert and pain free. ECG sinus rhythm. Step down planned for tomorrow.",
+      status: "Active",
+      admittedAt: new Date(Date.now() - 172800000),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
+  ];
+  await db.collection("icurecords").insertMany(icuRecordsData);
+
+  console.log("Creating Operation Theatre Surgeries...");
+  const otSurgeriesData = [
+    {
+      surgeryId: "OT-2026-001",
+      patient: patientIds[3],
+      admission: admissionIds[1],
+      theatreRoom: "OT Room 1 (Modular Cardiac / Neuro)",
+      surgeryType: "Elective",
+      procedureName: "L4-L5 Micro-endoscopic Lumbar Discectomy",
+      leadSurgeon: doctorIds[3],
+      anesthesiologist: doctorIds[0],
+      scrubNurse: "Nurse Clara Oswald",
+      circulatingNurse: "Nurse Sarah M.",
+      scheduledStart: new Date(Date.now() + 86400000),
+      scheduledEnd: new Date(Date.now() + 97200000),
+      preOpChecklist: {
+        npoVerified: true,
+        consentSigned: true,
+        siteMarked: true,
+        bloodArranged: true,
+        pacClearance: true,
+      },
+      safetyChecklist: {
+        signOutDone: false,
+        timeOutDone: false,
+        spongeAndNeedleCountCorrect: false,
+      },
+      status: "Scheduled",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      surgeryId: "OT-2026-002",
+      patient: patientIds[0],
+      admission: admissionIds[0],
+      theatreRoom: "OT Room 2 (Orthopedic & Trauma)",
+      surgeryType: "Emergency",
+      procedureName: "Primary Percutaneous Coronary Intervention (PCI)",
+      leadSurgeon: doctorIds[0],
+      anesthesiologist: doctorIds[1],
+      scrubNurse: "Nurse Clara Oswald",
+      scheduledStart: new Date(Date.now() - 86400000),
+      scheduledEnd: new Date(Date.now() - 79200000),
+      actualStart: new Date(Date.now() - 86400000),
+      actualEnd: new Date(Date.now() - 80000000),
+      preOpChecklist: {
+        npoVerified: true,
+        consentSigned: true,
+        siteMarked: true,
+        bloodArranged: true,
+        pacClearance: true,
+      },
+      safetyChecklist: {
+        signOutDone: true,
+        timeOutDone: true,
+        spongeAndNeedleCountCorrect: true,
+      },
+      postOpNotes: "Successful DES placement in proximal LAD. TIMI-3 flow restored.",
+      status: "Completed",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
+  ];
+  await db.collection("operationtheatres").insertMany(otSurgeriesData);
+
+  console.log("Creating Nursing Station Records...");
+  const nursingRecordsData = [
+    {
+      careId: "NRC-2026-001",
+      admission: admissionIds[0],
+      patient: patientIds[0],
+      nurse: "Nurse Clara Oswald",
+      shift: "Morning",
+      date: new Date(),
+      vitals: { bp: "124/80", pulse: "72 bpm", temp: "98.5 F", spo2: "99%", rr: "16" },
+      medicationAdministration: [
+        { drugName: "Atorvastatin 40mg", dose: "40mg", route: "Oral", scheduledTime: "08:00 AM", givenTime: "08:05 AM", status: "Given", administeredBy: "Nurse Clara Oswald" },
+        { drugName: "IV Heparin", dose: "1000 IU/hr", route: "IV Infusion", scheduledTime: "09:00 AM", givenTime: "09:00 AM", status: "Given", administeredBy: "Nurse Clara Oswald" }
+      ],
+      intakeOutput: {
+        oralIntakeMl: 600,
+        ivFluidMl: 1000,
+        urineOutputMl: 1350,
+        drainOutputMl: 0,
+        balanceMl: 250,
+      },
+      nursingNotes: "Patient resting comfortably. Surgical site dressing clean and dry without hematoma. Peripheral pulses palpable bilateral lower extremities.",
+      shiftHandover: "Post-PCI day 2. Blood work drawn for cardiac enzymes. Telemetry continuous.",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
+  ];
+  await db.collection("nursingcares").insertMany(nursingRecordsData);
+
+  console.log("Creating Discharge Summaries...");
+  const dischargeSummariesData = [
+    {
+      dischargeId: "DIS-2026-001",
+      admission: admissionIds[0],
+      patient: patientIds[0],
+      attendingDoctor: doctorIds[0],
+      admissionDate: new Date(Date.now() - 432000000),
+      dischargeDate: new Date(),
+      dischargeType: "Regular",
+      finalDiagnosis: "Acute Coronary Syndrome - Anterior Wall STEMI s/p Primary PCI to LAD with DES",
+      hospitalCourseSummary: "44-year-old male admitted with acute retrosternal chest pain. Emergency coronary angiogram revealed 95% proximal LAD stenosis. Primary PCI successfully performed with 3.0x24mm Everolimus-eluting stent. Post-op telemetry uneventful. Echocardiogram shows preserved LVEF 52%.",
+      conditionAtDischarge: "Hemodynamically stable, ambulating independently, asymptomatic.",
+      dischargeMedications: [
+        { medicineName: "Tab Aspirin 75mg", dosage: "75mg", frequency: "1-0-0", duration: "Lifetime", instructions: "After breakfast" },
+        { medicineName: "Tab Ticagrelor 90mg", dosage: "90mg", frequency: "1-0-1", duration: "1 Year", instructions: "Twice daily" },
+        { medicineName: "Tab Atorvastatin 40mg", dosage: "40mg", frequency: "0-0-1", duration: "6 Months", instructions: "Bedtime" },
+        { medicineName: "Tab Metoprolol 25mg", dosage: "25mg", frequency: "1-0-0", duration: "Ongoing", instructions: "Morning" }
+      ],
+      followUpInstructions: "Follow up in Cardiology OPD with Dr. Sarah Jenkins after 10 days. Repeat lipid profile and 2D Echo after 4 weeks. Report to Emergency immediately if chest pain or shortness of breath occurs.",
+      dietaryAdvice: "Strict low-salt, low-fat cardiac diet. High fiber and green leafy vegetables.",
+      activityRestrictions: "No heavy weight lifting (>5kg) for 3 weeks. Gentle 20 min morning walk encouraged.",
+      emergencyWarningSigns: ["Recurrent chest tightness or pain", "Severe breathlessness or sweating", "Dizziness or fainting"],
+      preparedBy: "Dr. Sarah Jenkins",
+      status: "Draft",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
+  ];
+  await db.collection("dischargesummaries").insertMany(dischargeSummariesData);
+
+  console.log("Creating Procurement Purchase Orders...");
+  const purchaseOrdersData = [
+    {
+      poNumber: "PO-2026-001",
+      vendorName: "MedSupply Global Technologies Ltd.",
+      vendorContact: { email: "orders@medsupplyglobal.com", phone: "+91 98110-44900", address: "500 Logistics Way, Industrial Park, Okhla" },
+      items: [
+        { itemName: "Sterile Surgical Gloves (Size 7.5)", category: "Surgical", quantity: 500, unitPrice: 85, totalAmount: 42500, unit: "Pairs" },
+        { itemName: "N95 Medical Respirator Masks", category: "Consumables", quantity: 1000, unitPrice: 45, totalAmount: 45000, unit: "Pcs" }
+      ],
+      totalCost: 87500,
+      expectedDeliveryDate: new Date(Date.now() + 432000000),
+      status: "Approved",
+      requestedBy: "Marcus Vance",
+      approvedBy: "Dr. Alexander Wright",
+      paymentStatus: "Pending",
+      notes: "High priority monthly consumables replenishment.",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      poNumber: "PO-2026-002",
+      vendorName: "BioTech Diagnostic Instruments",
+      vendorContact: { email: "support@biotechdiag.com", phone: "+91 98220-33900", address: "120 Innovation Drive, Sector 62, Noida" },
+      items: [
+        { itemName: "Digital Pulse Oximeters Pro", category: "Equipment", quantity: 20, unitPrice: 1200, totalAmount: 24000, unit: "Units" }
+      ],
+      totalCost: 24000,
+      expectedDeliveryDate: new Date(Date.now() - 86400000),
+      status: "Goods Received",
+      requestedBy: "David Chen",
+      approvedBy: "Dr. Alexander Wright",
+      paymentStatus: "Paid",
+      notes: "Received in good condition. Stock auto-incremented in inventory.",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
+  ];
+  await db.collection("purchaseorders").insertMany(purchaseOrdersData);
+
+  console.log("Creating System Audit Logs...");
+  const auditLogsData = [
+    {
+      action: "TRIAGE",
+      entity: "EmergencyCase",
+      entityId: "EMG-2026-001",
+      userEmail: "doctor@hospital.com",
+      userName: "Dr. Sarah Jenkins",
+      userRole: "DOCTOR",
+      details: "Triage assigned Level Red (Resuscitation) for STEMI patient Rajesh Sharma",
+      ipAddress: "192.168.1.45",
+      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Hospital-EMR-Terminal/2026",
+      timestamp: new Date(Date.now() - 3600000),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      action: "ADMIT",
+      entity: "Admission",
+      entityId: "ADM-2026-001",
+      userEmail: "admin@hospital.com",
+      userName: "Dr. Alexander Wright",
+      userRole: "SUPER_ADMIN",
+      details: "Admitted patient Rajesh Sharma to CCU Bed BED-ICU-01",
+      ipAddress: "192.168.1.10",
+      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Hospital-EMR-Terminal/2026",
+      timestamp: new Date(Date.now() - 7200000),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      action: "SURGERY_SCHEDULE",
+      entity: "OperationTheatre",
+      entityId: "OT-2026-001",
+      userEmail: "doctor@hospital.com",
+      userName: "Dr. Sarah Jenkins",
+      userRole: "DOCTOR",
+      details: "Scheduled L4-L5 Micro-endoscopic Lumbar Discectomy in OT Room 1",
+      ipAddress: "192.168.1.45",
+      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Hospital-EMR-Terminal/2026",
+      timestamp: new Date(Date.now() - 14400000),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
+  ];
+  await db.collection("auditlogs").insertMany(auditLogsData);
   await mongoose.disconnect();
 }
 

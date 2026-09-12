@@ -38,8 +38,6 @@ export default function PatientPrescriptionsPage() {
     loadRx();
   }, []);
 
-  if (loading) return <LoadingSpinner />;
-
   return (
     <div className="space-y-6">
       <div>

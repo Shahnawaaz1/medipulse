@@ -27,12 +27,12 @@ export default function DoctorDashboardPage() {
   const [opdQueue, setOpdQueue] = useState<any[]>([]);
   const [prescriptions, setPrescriptions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [aptTab, setAptTab] = useState<"Virtual" | "In-Person">("Virtual");
 
   useEffect(() => {
     async function loadDoctorData() {
       try {
         setLoading(true);
-        const today = new Date().toISOString().split("T")[0];
         const [aptRes, opdRes, rxRes] = await Promise.all([
           fetch(`/api/appointments`),
           fetch(`/api/opd`),
@@ -60,9 +60,13 @@ export default function DoctorDashboardPage() {
     loadDoctorData();
   }, []);
 
-  if (loading) return <LoadingSpinner />;
-
   const todayAppointments = appointments.slice(0, 5);
+  const virtualAppointments = appointments.filter(
+    (a) => a.consultationType === "Virtual Teleconsultation" || a.type === "Teleconsultation"
+  );
+  const inPersonAppointments = appointments.filter(
+    (a) => a.consultationType !== "Virtual Teleconsultation" && a.type !== "Teleconsultation"
+  );
   const activeOpd = opdQueue.filter((q) => q.status === "Waiting" || q.status === "In Consultation");
 
   return (
@@ -198,10 +202,13 @@ export default function DoctorDashboardPage() {
         {/* Right: Today's Appointments & Quick Tools */}
         <div className="lg:col-span-5 space-y-6">
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-                Upcoming Appointments
-              </h2>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+              <div>
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                  Today's Scheduled Consultations
+                </h2>
+                <p className="text-[11px] text-slate-400">Manage virtual video clinics and in-person visits</p>
+              </div>
               <Link
                 href="/appointments"
                 className="text-xs font-semibold text-brand-600 hover:underline dark:text-brand-400"
@@ -210,27 +217,81 @@ export default function DoctorDashboardPage() {
               </Link>
             </div>
 
-            <div className="mt-4 space-y-3">
-              {todayAppointments.length === 0 ? (
-                <p className="py-6 text-center text-xs text-slate-400">No scheduled appointments</p>
+            {/* Filter Tabs */}
+            <div className="flex gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-800 mt-3">
+              <button
+                onClick={() => setAptTab("Virtual")}
+                className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  aptTab === "Virtual"
+                    ? "bg-white text-sky-700 shadow-sm dark:bg-slate-900 dark:text-sky-300"
+                    : "text-slate-500 hover:text-slate-900 dark:text-slate-400"
+                }`}
+              >
+                <Video className="h-3.5 w-3.5" />
+                <span>Virtual Video ({virtualAppointments.length})</span>
+              </button>
+              <button
+                onClick={() => setAptTab("In-Person")}
+                className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  aptTab === "In-Person"
+                    ? "bg-white text-teal-700 shadow-sm dark:bg-slate-900 dark:text-teal-300"
+                    : "text-slate-500 hover:text-slate-900 dark:text-slate-400"
+                }`}
+              >
+                <span>🏥 In-Person ({inPersonAppointments.length})</span>
+              </button>
+            </div>
+
+            <div className="mt-3 space-y-3">
+              {(aptTab === "Virtual" ? virtualAppointments : inPersonAppointments).length === 0 ? (
+                <div className="py-6 text-center text-xs text-slate-400">
+                  <p>No {aptTab.toLowerCase()} appointments scheduled today</p>
+                </div>
               ) : (
-                todayAppointments.map((apt: any) => (
-                  <div
-                    key={apt._id}
-                    className="flex items-center justify-between rounded-xl bg-slate-50 p-3 dark:bg-slate-800/60"
-                  >
-                    <div>
-                      <p className="text-xs font-bold text-slate-800 dark:text-white">
-                        {apt.patient?.name || "Patient"}
-                      </p>
-                      <p className="text-[11px] text-slate-400 flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        <span>{apt.timeSlot}</span>
-                      </p>
+                (aptTab === "Virtual" ? virtualAppointments : inPersonAppointments).slice(0, 5).map((apt: any) => {
+                  const isVirtual = apt.consultationType === "Virtual Teleconsultation" || apt.type === "Teleconsultation";
+                  const sessionRoom = apt.teleconsultationSession?.roomId || `TEL-${apt.appointmentId?.replace("APT-", "") || apt._id?.slice(-4)}`;
+
+                  return (
+                    <div
+                      key={apt._id}
+                      className={`flex flex-col gap-2 rounded-xl p-3 border transition-colors ${
+                        isVirtual
+                          ? "bg-sky-50/50 border-sky-100 dark:bg-sky-950/20 dark:border-sky-900/40"
+                          : "bg-slate-50 border-slate-100 dark:bg-slate-800/60 dark:border-slate-800"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-bold text-slate-800 dark:text-white">
+                            {apt.patient?.name || "Patient Record"}
+                          </p>
+                          <p className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
+                            <Clock className="h-3 w-3" />
+                            <span>{apt.timeSlot}</span>
+                            <span>• {apt.reason || "General Checkup"}</span>
+                          </p>
+                        </div>
+                        <StatusBadge status={apt.status || "Confirmed"} />
+                      </div>
+
+                      {isVirtual && apt.status !== "Completed" && (
+                        <div className="flex items-center justify-between pt-2 border-t border-sky-100/70 dark:border-sky-900/30">
+                          <span className="text-[10px] font-semibold text-sky-700 dark:text-sky-300">
+                            Room: {sessionRoom}
+                          </span>
+                          <Link
+                            href={`/teleconsultation?room=${sessionRoom}&appointment=${apt.appointmentId}&role=doctor`}
+                            className="rounded-lg bg-sky-600 px-3 py-1 text-[11px] font-extrabold text-white hover:bg-sky-700 transition-all flex items-center gap-1 shadow-sm"
+                          >
+                            <Video className="h-3 w-3" />
+                            <span>Start Consultation</span>
+                          </Link>
+                        </div>
+                      )}
                     </div>
-                    <StatusBadge status={apt.status || "Confirmed"} />
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>

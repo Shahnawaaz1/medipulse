@@ -22,6 +22,10 @@ import {
   QrCode,
   Video,
   Globe,
+  Siren,
+  Scissors,
+  ShieldAlert,
+  Package,
 } from "lucide-react";
 import { StatCard } from "@/components/common/StatCard";
 import { StatusBadge } from "@/components/common/StatusBadge";
@@ -65,10 +69,6 @@ export default function DashboardPage() {
     loadStats();
   }, []);
 
-  if (loading) {
-    return <LoadingSpinner label="Loading hospital operations dashboard..." />;
-  }
-
   const stats = data?.stats || {};
   const revenueAnalytics = data?.revenueAnalytics || [];
   const departmentDistribution = data?.departmentDistribution || [];
@@ -85,13 +85,13 @@ export default function DashboardPage() {
         <div className="relative z-10 space-y-1">
           <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold backdrop-blur-md border border-white/10">
             <Activity className="h-3.5 w-3.5 text-teal-400 animate-pulse" />
-            <span>Hospital Operations & Clinical AI Active</span>
+            <span>Hospital Command Center & Multi-Department Telemetry</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            MediPulse Executive Dashboard
+            MediPulse Hospital Operations Center
           </h1>
           <p className="text-xs sm:text-sm text-slate-300 max-w-xl">
-            Real-time monitoring of patient admissions, clinical queue, doctor schedules, diagnostics, ABHA records, and revenue.
+            Real-time monitoring of emergency triage, ICU telemetry, OT surgical suites, clinical queues, diagnostics, and financial analytics.
           </p>
         </div>
 
@@ -113,69 +113,69 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Smart Healthcare Hub Badges */}
+      {/* Critical Care Command Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Link
-          href="/ai-assistant"
-          className="group relative flex items-center justify-between rounded-2xl bg-gradient-to-br from-purple-500/10 via-brand-500/5 to-purple-500/10 border border-purple-500/20 p-4 transition-all hover:shadow-lg hover:border-purple-500/40"
+          href="/emergency"
+          className="group relative flex items-center justify-between rounded-2xl bg-gradient-to-br from-rose-500/10 via-brand-500/5 to-rose-500/10 border border-rose-500/20 p-4 transition-all hover:shadow-lg hover:border-rose-500/40"
         >
           <div className="flex items-center gap-3.5">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-600 text-white shadow-md shadow-purple-500/30">
-              <Sparkles className="h-6 w-6" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-600 text-white shadow-md shadow-rose-500/30">
+              <Siren className="h-6 w-6 animate-bounce" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h4 className="font-bold text-sm text-slate-900 dark:text-white">AI Doctor Co-Pilot</h4>
-                <span className="rounded-full bg-purple-100 dark:bg-purple-950 px-2 py-0.5 text-[10px] font-extrabold text-purple-700 dark:text-purple-300">
-                  AI 2.0
+                <h4 className="font-bold text-sm text-slate-900 dark:text-white">Emergency & Casualty</h4>
+                <span className="rounded-full bg-rose-100 dark:bg-rose-950 px-2 py-0.5 text-[10px] font-extrabold text-rose-700 dark:text-rose-300">
+                  {stats.activeEmergencyCases || 0} Active
                 </span>
               </div>
-              <p className="text-xs text-slate-500">Symptom analysis, differential diagnosis & RX</p>
+              <p className="text-xs text-slate-500">{stats.criticalEmergencyCases || 0} Critical Level-1 Triage Cases</p>
             </div>
           </div>
-          <ArrowUpRight className="h-5 w-5 text-purple-500 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          <ArrowUpRight className="h-5 w-5 text-rose-500 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
         </Link>
 
         <Link
-          href="/abha"
-          className="group relative flex items-center justify-between rounded-2xl bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-emerald-500/10 border border-emerald-500/20 p-4 transition-all hover:shadow-lg hover:border-emerald-500/40"
+          href="/icu"
+          className="group relative flex items-center justify-between rounded-2xl bg-gradient-to-br from-amber-500/10 via-yellow-500/5 to-amber-500/10 border border-amber-500/20 p-4 transition-all hover:shadow-lg hover:border-amber-500/40"
         >
           <div className="flex items-center gap-3.5">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-md shadow-emerald-500/30">
-              <QrCode className="h-6 w-6" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-600 text-white shadow-md shadow-amber-500/30">
+              <Activity className="h-6 w-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h4 className="font-bold text-sm text-slate-900 dark:text-white">ABDM & ABHA Cards</h4>
-                <span className="rounded-full bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 text-[10px] font-extrabold text-emerald-700 dark:text-emerald-300">
-                  M3 Certified
+                <h4 className="font-bold text-sm text-slate-900 dark:text-white">ICU Live Telemetry</h4>
+                <span className="rounded-full bg-amber-100 dark:bg-amber-950 px-2 py-0.5 text-[10px] font-extrabold text-amber-700 dark:text-amber-300">
+                  {stats.icuOccupiedCount || 0} In ICU
                 </span>
               </div>
-              <p className="text-xs text-slate-500">14-digit ABHA creation, QR & Care contexts</p>
+              <p className="text-xs text-slate-500">Live multi-parameter ventilator monitoring</p>
             </div>
           </div>
-          <ArrowUpRight className="h-5 w-5 text-emerald-500 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          <ArrowUpRight className="h-5 w-5 text-amber-500 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
         </Link>
 
         <Link
-          href="/teleconsultation"
-          className="group relative flex items-center justify-between rounded-2xl bg-gradient-to-br from-sky-500/10 via-blue-500/5 to-sky-500/10 border border-sky-500/20 p-4 transition-all hover:shadow-lg hover:border-sky-500/40"
+          href="/ot"
+          className="group relative flex items-center justify-between rounded-2xl bg-gradient-to-br from-teal-500/10 via-cyan-500/5 to-teal-500/10 border border-teal-500/20 p-4 transition-all hover:shadow-lg hover:border-teal-500/40"
         >
           <div className="flex items-center gap-3.5">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-600 text-white shadow-md shadow-sky-500/30">
-              <Video className="h-6 w-6" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-600 text-white shadow-md shadow-teal-500/30">
+              <Scissors className="h-6 w-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h4 className="font-bold text-sm text-slate-900 dark:text-white">Teleconsultation Room</h4>
-                <span className="rounded-full bg-sky-100 dark:bg-sky-950 px-2 py-0.5 text-[10px] font-extrabold text-sky-700 dark:text-sky-300">
-                  HD Live
+                <h4 className="font-bold text-sm text-slate-900 dark:text-white">Operation Theatre (OT)</h4>
+                <span className="rounded-full bg-teal-100 dark:bg-teal-950 px-2 py-0.5 text-[10px] font-extrabold text-teal-700 dark:text-teal-300">
+                  {stats.surgeriesScheduledToday || 0} Today
                 </span>
               </div>
-              <p className="text-xs text-slate-500">Virtual clinic, WebRTC video & instant e-Rx</p>
+              <p className="text-xs text-slate-500">Surgical suite schedules & PACU tracking</p>
             </div>
           </div>
-          <ArrowUpRight className="h-5 w-5 text-sky-500 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          <ArrowUpRight className="h-5 w-5 text-teal-500 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
         </Link>
       </div>
 
@@ -184,34 +184,30 @@ export default function DashboardPage() {
         <StatCard
           title="Total Registered Patients"
           value={stats.totalPatients || 0}
-          subtitle="+12% from last month"
-          trend={{ value: "+12%", isPositive: true }}
+          trend={{ value: 12, isPositive: true }}
+          description="Active Patient 360 EHRs"
           icon={Users}
-          colorScheme="blue"
         />
         <StatCard
           title="Today's Appointments"
           value={stats.todayAppointments || 0}
-          subtitle="8 pending check-in"
-          trend={{ value: "Live Queue", isPositive: true }}
+          trend={{ value: 5, isPositive: true }}
+          description={`${stats.todayOpd || 0} OPD tokens checked in`}
           icon={Calendar}
-          colorScheme="teal"
         />
         <StatCard
           title="Bed Occupancy"
           value={`${stats.occupiedBeds || 0} / ${stats.totalBeds || 0}`}
-          subtitle={`${stats.bedOccupancyRate || 0}% Occupied`}
-          trend={{ value: `${stats.bedOccupancyRate || 0}%`, isPositive: stats.bedOccupancyRate < 90 }}
+          trend={{ value: stats.bedOccupancyRate || 0, isPositive: true }}
+          description={`${stats.availableBeds || 0} Beds Available`}
           icon={Bed}
-          colorScheme="indigo"
         />
         <StatCard
-          title="Monthly Revenue"
-          value={formatCurrency(stats.monthlyRevenue || 0)}
-          subtitle="+18.4% monthly growth"
-          trend={{ value: "+18.4%", isPositive: true }}
+          title="Total Revenue Collections"
+          value={formatCurrency(stats.totalRevenue || 0)}
+          trend={{ value: 18, isPositive: true }}
+          description={`Today: ${formatCurrency(stats.todayRevenue || 0)}`}
           icon={DollarSign}
-          colorScheme="emerald"
         />
       </div>
 
@@ -233,7 +229,6 @@ export default function DashboardPage() {
                 <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-sky-500"></span> Total</span>
                 <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-teal-500"></span> IPD</span>
                 <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-amber-500"></span> OPD</span>
-                <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-purple-500"></span> Pharmacy</span>
               </div>
               <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full dark:bg-emerald-950/60 dark:text-emerald-400">
                 <TrendingUp className="h-3.5 w-3.5" />
@@ -324,10 +319,10 @@ export default function DashboardPage() {
         <div className="rounded-3xl bg-white p-6 shadow-sm border border-slate-100 dark:bg-slate-900 dark:border-slate-800 flex flex-col justify-between">
           <div>
             <h3 className="text-base font-bold text-slate-900 dark:text-white">
-              Department Patient Load
+              Department Clinical Volume
             </h3>
             <p className="text-xs text-slate-400">
-              Active patient volume across clinical specialities
+              Patient distribution across hospital wings
             </p>
           </div>
 
@@ -382,17 +377,17 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Appointments & Live OPD Matrix */}
+      {/* Appointments & Live Quick Links */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Recent Appointments Table */}
         <div className="lg:col-span-2 rounded-3xl bg-white p-6 shadow-sm border border-slate-100 dark:bg-slate-900 dark:border-slate-800">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                Today's Appointments & Consultations
+                Live Outpatient Queue & Appointments
               </h3>
               <p className="text-xs text-slate-400">
-                Live patient appointments scheduled for today
+                Today's scheduled patient consultations
               </p>
             </div>
             <Link
@@ -419,7 +414,7 @@ export default function DashboardPage() {
                 {recentAppointments.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="text-center py-6 text-slate-400">
-                      No appointments found for today.
+                      No appointments scheduled.
                     </td>
                   </tr>
                 ) : (
@@ -462,9 +457,9 @@ export default function DashboardPage() {
         <div className="rounded-3xl bg-white p-6 shadow-sm border border-slate-100 dark:bg-slate-900 dark:border-slate-800 space-y-4">
           <div>
             <h3 className="text-base font-bold text-slate-900 dark:text-white">
-              Emergency & Quick Actions
+              Hospital Operations Quick Hub
             </h3>
-            <p className="text-xs text-slate-400">One-click hospital workflows</p>
+            <p className="text-xs text-slate-400">Fast access to clinical modules</p>
           </div>
 
           <div className="grid grid-cols-1 gap-2.5">
@@ -482,41 +477,41 @@ export default function DashboardPage() {
             </Link>
 
             <Link
-              href="/appointments/schedule"
+              href="/emergency"
+              className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/50 p-3 text-xs font-bold text-slate-800 transition-all hover:border-rose-500 hover:bg-rose-50/50 hover:text-rose-700 dark:border-slate-800 dark:bg-slate-800/40 dark:text-slate-200 dark:hover:bg-slate-800"
+            >
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-600 text-white">
+                <Siren className="h-4 w-4" />
+              </div>
+              <div>
+                <p>Emergency Triage Desk</p>
+                <p className="text-[10px] font-normal text-slate-400">24x7 Casualty intake</p>
+              </div>
+            </Link>
+
+            <Link
+              href="/ot"
               className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/50 p-3 text-xs font-bold text-slate-800 transition-all hover:border-teal-500 hover:bg-teal-50/50 hover:text-teal-700 dark:border-slate-800 dark:bg-slate-800/40 dark:text-slate-200 dark:hover:bg-slate-800"
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-teal-600 text-white">
-                <Calendar className="h-4 w-4" />
+                <Scissors className="h-4 w-4" />
               </div>
               <div>
-                <p>Doctor Slot Matrix</p>
-                <p className="text-[10px] font-normal text-slate-400">View live OPD schedules</p>
+                <p>OT Surgery Scheduling</p>
+                <p className="text-[10px] font-normal text-slate-400">Book surgical suites</p>
               </div>
             </Link>
 
             <Link
-              href="/beds"
-              className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/50 p-3 text-xs font-bold text-slate-800 transition-all hover:border-indigo-500 hover:bg-indigo-50/50 hover:text-indigo-700 dark:border-slate-800 dark:bg-slate-800/40 dark:text-slate-200 dark:hover:bg-slate-800"
+              href="/audit-logs"
+              className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/50 p-3 text-xs font-bold text-slate-800 transition-all hover:border-slate-500 hover:bg-slate-100/50 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-800/40 dark:text-slate-200 dark:hover:bg-slate-800"
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 text-white">
-                <Bed className="h-4 w-4" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 text-white">
+                <ShieldAlert className="h-4 w-4 text-amber-400" />
               </div>
               <div>
-                <p>Bed Occupancy Radar</p>
-                <p className="text-[10px] font-normal text-slate-400">ICU, Deluxe & General wards</p>
-              </div>
-            </Link>
-
-            <Link
-              href="/billing"
-              className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/50 p-3 text-xs font-bold text-slate-800 transition-all hover:border-emerald-500 hover:bg-emerald-50/50 hover:text-emerald-700 dark:border-slate-800 dark:bg-slate-800/40 dark:text-slate-200 dark:hover:bg-slate-800"
-            >
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-600 text-white">
-                <Receipt className="h-4 w-4" />
-              </div>
-              <div>
-                <p>TPA & Invoicing Desk</p>
-                <p className="text-[10px] font-normal text-slate-400">Cashless claims & GST bills</p>
+                <p>Security & Audit Trail</p>
+                <p className="text-[10px] font-normal text-slate-400">Admin compliance logs</p>
               </div>
             </Link>
           </div>

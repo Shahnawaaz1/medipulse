@@ -34,6 +34,17 @@ export type Permission =
   | "VIEW_RADIOLOGY"
   | "MANAGE_INVENTORY"
   | "VIEW_INVENTORY"
+  | "MANAGE_EMERGENCY"
+  | "VIEW_EMERGENCY"
+  | "MANAGE_ICU"
+  | "VIEW_ICU"
+  | "MANAGE_OT"
+  | "VIEW_OT"
+  | "MANAGE_NURSING"
+  | "VIEW_NURSING"
+  | "VIEW_AUDIT_LOGS"
+  | "MANAGE_PROCUREMENT"
+  | "VIEW_PROCUREMENT"
   | "USE_AI_ASSISTANT"
   | "USE_TELECONSULTATION"
   | "USE_ABHA"
@@ -96,6 +107,7 @@ export const ROLE_PERMISSIONS: Record<StandardRole, Permission[]> = {
     "VIEW_BEDS",
     "VIEW_DEPARTMENTS",
     "VIEW_DOCTORS",
+    "VIEW_EMERGENCY",
   ],
   DOCTOR: [
     "VIEW_PATIENTS",
@@ -104,6 +116,7 @@ export const ROLE_PERMISSIONS: Record<StandardRole, Permission[]> = {
     "VIEW_OPD",
     "MANAGE_OPD",
     "VIEW_IPD",
+    "MANAGE_IPD",
     "VIEW_BEDS",
     "VIEW_DEPARTMENTS",
     "VIEW_DOCTORS",
@@ -111,6 +124,12 @@ export const ROLE_PERMISSIONS: Record<StandardRole, Permission[]> = {
     "MANAGE_PRESCRIPTIONS",
     "VIEW_LAB",
     "VIEW_RADIOLOGY",
+    "VIEW_EMERGENCY",
+    "MANAGE_EMERGENCY",
+    "VIEW_ICU",
+    "MANAGE_ICU",
+    "VIEW_OT",
+    "MANAGE_OT",
     "USE_AI_ASSISTANT",
     "USE_TELECONSULTATION",
     "USE_ABHA",
@@ -128,6 +147,13 @@ export const ROLE_PERMISSIONS: Record<StandardRole, Permission[]> = {
     "VIEW_PRESCRIPTIONS",
     "VIEW_LAB",
     "VIEW_RADIOLOGY",
+    "VIEW_EMERGENCY",
+    "MANAGE_EMERGENCY",
+    "VIEW_ICU",
+    "MANAGE_ICU",
+    "VIEW_OT",
+    "VIEW_NURSING",
+    "MANAGE_NURSING",
     "USE_ABHA",
   ],
   RECEPTIONIST: [
@@ -141,6 +167,8 @@ export const ROLE_PERMISSIONS: Record<StandardRole, Permission[]> = {
     "VIEW_BEDS",
     "VIEW_DEPARTMENTS",
     "VIEW_DOCTORS",
+    "VIEW_EMERGENCY",
+    "MANAGE_EMERGENCY",
     "USE_ABHA",
   ],
   PHARMACIST: [
@@ -149,12 +177,16 @@ export const ROLE_PERMISSIONS: Record<StandardRole, Permission[]> = {
     "VIEW_PHARMACY",
     "MANAGE_PHARMACY",
     "VIEW_INVENTORY",
+    "MANAGE_INVENTORY",
+    "VIEW_PROCUREMENT",
   ],
   ACCOUNTANT: [
     "VIEW_INVOICES",
     "MANAGE_INVOICES",
     "VIEW_FINANCIAL_ANALYTICS",
     "VIEW_PATIENTS",
+    "VIEW_PROCUREMENT",
+    "MANAGE_PROCUREMENT",
   ],
   LAB_TECHNICIAN: [
     "VIEW_LAB",
@@ -256,6 +288,7 @@ export function canAccessRoute(role: string | undefined | null, path: string): b
         path.startsWith("/patients") ||
         path.startsWith("/opd") ||
         path.startsWith("/appointments") ||
+        path.startsWith("/emergency") ||
         path.startsWith("/departments")
       );
     case "DOCTOR":
@@ -267,6 +300,9 @@ export function canAccessRoute(role: string | undefined | null, path: string): b
         path.startsWith("/patients") ||
         path.startsWith("/prescriptions") ||
         path.startsWith("/referrals") ||
+        path.startsWith("/emergency") ||
+        path.startsWith("/icu") ||
+        path.startsWith("/ot") ||
         path.startsWith("/teleconsultation") ||
         path.startsWith("/ai-assistant") ||
         path.startsWith("/laboratory") ||
@@ -286,6 +322,9 @@ export function canAccessRoute(role: string | undefined | null, path: string): b
         path.startsWith("/patients") ||
         path.startsWith("/prescriptions") ||
         path.startsWith("/opd") ||
+        path.startsWith("/emergency") ||
+        path.startsWith("/icu") ||
+        path.startsWith("/ot") ||
         path.startsWith("/appointments") ||
         path.startsWith("/departments") ||
         path.startsWith("/doctors") ||
@@ -301,6 +340,7 @@ export function canAccessRoute(role: string | undefined | null, path: string): b
         path.startsWith("/patients") ||
         path.startsWith("/appointments") ||
         path.startsWith("/opd") ||
+        path.startsWith("/emergency") ||
         path.startsWith("/beds") ||
         path.startsWith("/doctors") ||
         path.startsWith("/departments") ||
@@ -322,6 +362,7 @@ export function canAccessRoute(role: string | undefined | null, path: string): b
         path === "/accounts/dashboard" ||
         path === "/profile" ||
         path.startsWith("/billing") ||
+        path.startsWith("/inventory") ||
         path.startsWith("/reports") ||
         path.startsWith("/patients")
       );

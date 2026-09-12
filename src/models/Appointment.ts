@@ -10,7 +10,7 @@ const AppointmentSchema = new Schema(
     timeSlot: { type: String, required: true },
     type: {
       type: String,
-      enum: ["General", "Follow-up", "Emergency", "Routine Checkup"],
+      enum: ["General", "Follow-up", "Emergency", "Routine Checkup", "Teleconsultation"],
       default: "General",
     },
     status: {
@@ -35,10 +35,25 @@ const AppointmentSchema = new Schema(
       weight: { type: String },
       height: { type: String },
     },
+    consultationType: {
+      type: String,
+      enum: ["In-Person", "Virtual Teleconsultation"],
+      default: "In-Person",
+    },
+    teleconsultationSession: {
+      type: Schema.Types.ObjectId,
+      ref: "TeleconsultationSession",
+    },
+    fee: { type: Number, default: 500 },
     clinicalNotes: { type: String },
   },
   { timestamps: true }
 );
+
+AppointmentSchema.index({ doctor: 1, appointmentDate: 1, timeSlot: 1 });
+AppointmentSchema.index({ patient: 1, appointmentDate: -1 });
+AppointmentSchema.index({ appointmentDate: 1, status: 1 });
+AppointmentSchema.index({ consultationType: 1, status: 1 });
 
 export const Appointment = models.Appointment || model("Appointment", AppointmentSchema);
 export default Appointment;

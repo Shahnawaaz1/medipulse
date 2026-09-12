@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -25,6 +25,16 @@ import {
   Share2,
   Building2,
   ShieldAlert,
+  Siren,
+  Scissors,
+  QrCode,
+  HeartPulse,
+  Wind,
+  FileText,
+  BadgeCheck,
+  CreditCard,
+  History,
+  Pill,
 } from "lucide-react";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
@@ -40,7 +50,10 @@ export default function PatientProfilePage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<
+    | "360-timeline"
     | "overview"
+    | "emergency"
+    | "icu-ot"
     | "appointments"
     | "prescriptions"
     | "lab"
@@ -48,7 +61,9 @@ export default function PatientProfilePage() {
     | "admissions"
     | "billing"
     | "referrals"
-  >("overview");
+  >("360-timeline");
+
+  const [timelineFilter, setTimelineFilter] = useState("All");
 
   // Referral Modal States
   const [isReferModalOpen, setIsReferModalOpen] = useState(false);
@@ -153,11 +168,248 @@ export default function PatientProfilePage() {
     }
   };
 
+  const patient = data?.patient;
+  const history = data?.history || {};
+  const appointments = history.appointments || [];
+  const prescriptions = history.prescriptions || [];
+  const labOrders = history.labOrders || [];
+  const radiologyOrders = history.radiologyOrders || [];
+  const admissions = history.admissions || [];
+  const invoices = history.invoices || [];
+  const referrals = history.referrals || [];
+  const emergencyCases = history.emergencyCases || [];
+  const icuRecords = history.icuRecords || [];
+  const otSurgeries = history.otSurgeries || [];
+  const nursingRecords = history.nursingRecords || [];
+  const dischargeSummaries = history.dischargeSummaries || [];
+  const abhaCard = history.abhaCard;
+  const opdRecords = history.opdRecords || [];
+
+  // Construct Patient 360 Unified Chronological Timeline
+  const unifiedTimeline = useMemo(() => {
+    if (!patient) return [];
+
+    const events: any[] = [];
+
+    // Registration Event
+    if (patient.createdAt) {
+      events.push({
+        id: `reg-${patient._id}`,
+        type: "Registration",
+        title: "Patient Registered in MediPulse HMS",
+        date: new Date(patient.createdAt),
+        department: "Front Desk Registration",
+        doctor: "Reception Desk",
+        badge: "ID Assigned",
+        badgeColor: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+        icon: User,
+        description: `Registered with Patient ID: ${patient.patientId}. Demographics: ${patient.gender}, ${patient.age} yrs. Blood Group: ${patient.bloodGroup}`,
+        category: "Administrative",
+      });
+    }
+
+    // Emergency Cases
+    emergencyCases.forEach((emg: any) => {
+      events.push({
+        id: `emg-${emg._id}`,
+        type: "Emergency",
+        title: `Emergency Triage: ${emg.emergencyId} (${emg.triagePriority} Priority)`,
+        date: new Date(emg.arrivalTime || emg.createdAt),
+        department: "Casualty / Trauma Bay",
+        doctor: emg.assignedDoctor?.name || "ER Consultant",
+        badge: emg.status,
+        badgeColor: "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300",
+        icon: Siren,
+        description: `Chief complaint: ${emg.chiefComplaint}. Initial condition: ${emg.initialCondition}. Vitals: BP ${emg.vitalSigns?.bp}, SpO2 ${emg.vitalSigns?.spo2}%. Mode: ${emg.arrivalMode}`,
+        category: "Emergency & Critical",
+      });
+    });
+
+    // ICU Stays
+    icuRecords.forEach((icu: any) => {
+      events.push({
+        id: `icu-${icu._id}`,
+        type: "ICU",
+        title: `ICU Admission (${icu.unit}) - Bed ${icu.bed?.bedNumber || "ICU"}`,
+        date: new Date(icu.admittedAt || icu.createdAt),
+        department: "Critical Care Unit",
+        doctor: icu.attendingIntensivist?.name || "Intensivist",
+        badge: icu.status,
+        badgeColor: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+        icon: Activity,
+        description: `Ventilator Support: ${icu.ventilatorStatus}. Daily Clinical Notes: ${icu.dailyNotes || "Active telemetry telemetry monitoring"}`,
+        category: "Emergency & Critical",
+      });
+    });
+
+    // OT Surgeries
+    otSurgeries.forEach((ot: any) => {
+      events.push({
+        id: `ot-${ot._id}`,
+        type: "Surgery",
+        title: `OT Surgical Procedure: ${ot.procedureName}`,
+        date: new Date(ot.scheduledDate),
+        department: ot.theatreNumber,
+        doctor: ot.leadSurgeon?.name || "Lead Surgeon",
+        badge: ot.surgeryStatus,
+        badgeColor: "bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-300",
+        icon: Scissors,
+        description: `Anesthesia: ${ot.anesthesiaType}. Post-Op Notes: ${ot.postOpNotes || "Surgical recovery monitoring in PACU"}`,
+        category: "Surgery",
+      });
+    });
+
+    // Appointments & OPD
+    appointments.forEach((apt: any) => {
+      events.push({
+        id: `apt-${apt._id}`,
+        type: "Appointment",
+        title: `Consultation: ${apt.department}`,
+        date: new Date(apt.appointmentDate),
+        department: apt.department,
+        doctor: apt.doctor?.name || "Consultant Doctor",
+        badge: apt.status,
+        badgeColor: "bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300",
+        icon: Calendar,
+        description: `Reason for consultation: ${apt.reason || "Routine visit"}. Slot: ${apt.timeSlot || "Scheduled"}`,
+        category: "Consultation",
+      });
+    });
+
+    // Prescriptions (Rx)
+    prescriptions.forEach((rx: any) => {
+      const medList = (rx.medicines || []).map((m: any) => `${m.medicineName} (${m.dosage})`).join(", ");
+      events.push({
+        id: `rx-${rx._id}`,
+        type: "Prescription",
+        title: `Prescription Issued (${rx.prescriptionId})`,
+        date: new Date(rx.date || rx.createdAt),
+        department: "Pharmacy & Clinical Rx",
+        doctor: rx.doctor?.name || "Attending Doctor",
+        badge: rx.status || "Active",
+        badgeColor: "bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300",
+        icon: FileSignature,
+        description: `Diagnosis: ${rx.diagnosis}. Prescribed Drugs: ${medList || "Standard medication regimen"}`,
+        category: "Medication",
+      });
+    });
+
+    // Lab Orders & Diagnostic Reports
+    labOrders.forEach((lab: any) => {
+      const tests = (lab.tests || []).map((t: any) => t.name).join(", ");
+      events.push({
+        id: `lab-${lab._id}`,
+        type: "Laboratory",
+        title: `Pathology Order (${lab.orderId})`,
+        date: new Date(lab.orderDate || lab.createdAt),
+        department: "Pathology Diagnostics",
+        doctor: lab.doctor?.name || "Laboratory Tech",
+        badge: lab.status,
+        badgeColor: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
+        icon: FlaskConical,
+        description: `Tests: ${tests || "Comprehensive Panel"}. Clinical Findings: ${lab.clinicalFindings || "Report generated"}`,
+        category: "Diagnostics",
+      });
+    });
+
+    // Radiology Scans
+    radiologyOrders.forEach((rad: any) => {
+      events.push({
+        id: `rad-${rad._id}`,
+        type: "Radiology",
+        title: `Radiology Scan: ${rad.modality} - ${rad.bodyPart}`,
+        date: new Date(rad.orderDate || rad.createdAt),
+        department: "Diagnostic Radiology & Imaging",
+        doctor: rad.doctor?.name || "Radiologist",
+        badge: rad.status,
+        badgeColor: "bg-cyan-100 text-cyan-700 dark:bg-cyan-950 dark:text-cyan-300",
+        icon: ScanLine,
+        description: `Impression: ${rad.impression || rad.clinicalNotes || "Imaging acquisition completed"}`,
+        category: "Diagnostics",
+      });
+    });
+
+    // Inpatient Admissions & Discharge Summaries
+    admissions.forEach((adm: any) => {
+      events.push({
+        id: `adm-${adm._id}`,
+        type: "Admission",
+        title: `IPD Inpatient Admission (${adm.admissionId})`,
+        date: new Date(adm.admissionDate),
+        department: `${adm.department} (Ward: ${adm.ward}, Bed: ${adm.bed?.bedNumber || "Assigned"})`,
+        doctor: adm.doctor?.name || "Ward Consultant",
+        badge: adm.status,
+        badgeColor: "bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300",
+        icon: Hotel,
+        description: `Reason: ${adm.admissionReason}. Treatment Plan: ${adm.treatmentPlan || "Inpatient Care"}`,
+        category: "Inpatient",
+      });
+    });
+
+    dischargeSummaries.forEach((dsc: any) => {
+      events.push({
+        id: `dsc-${dsc._id}`,
+        type: "Discharge",
+        title: `Official Discharge Summary (${dsc.dischargeId})`,
+        date: new Date(dsc.dischargeDate),
+        department: dsc.department,
+        doctor: dsc.attendingDoctor?.name || "Attending Physician",
+        badge: dsc.dischargeType,
+        badgeColor: "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300",
+        icon: BadgeCheck,
+        description: `Final Diagnosis: ${dsc.finalDiagnosis}. Hospital Course: ${dsc.hospitalCourse || "Treatment successfully completed"}`,
+        category: "Inpatient",
+      });
+    });
+
+    // Patient Referrals
+    referrals.forEach((ref: any) => {
+      events.push({
+        id: `ref-${ref._id}`,
+        type: "Referral",
+        title: `External Referral: To ${ref.destinationHospital}`,
+        date: new Date(ref.referralDate),
+        department: ref.destinationDepartment,
+        doctor: ref.referringDoctor?.name || "Referring Doctor",
+        badge: ref.status,
+        badgeColor: "bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-950 dark:text-fuchsia-300",
+        icon: Share2,
+        description: `Reason: ${ref.reasonForReferral}. Clinical Summary: ${ref.clinicalSummary || "Transferred for tertiary care"}`,
+        category: "Administrative",
+      });
+    });
+
+    // Invoices & Billing
+    invoices.forEach((inv: any) => {
+      events.push({
+        id: `inv-${inv._id}`,
+        type: "Billing",
+        title: `Billing Invoice (${inv.invoiceNumber})`,
+        date: new Date(inv.invoiceDate || inv.createdAt),
+        department: "Finance & Accounts",
+        doctor: inv.doctor?.name || "Accounts",
+        badge: inv.paymentStatus,
+        badgeColor: inv.paymentStatus === "Paid" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700",
+        icon: Receipt,
+        description: `Total Billed: ${formatCurrency(inv.totalAmount)}. Paid: ${formatCurrency(inv.paidAmount)}. Balance: ${formatCurrency(inv.balanceAmount)}`,
+        category: "Billing",
+      });
+    });
+
+    // Sort descending by event timestamp
+    return events.sort((a, b) => b.date.getTime() - a.date.getTime());
+  }, [data]);
+
+  const filteredTimeline = useMemo(() => {
+    if (timelineFilter === "All") return unifiedTimeline;
+    return unifiedTimeline.filter((e) => e.category === timelineFilter || e.type === timelineFilter);
+  }, [unifiedTimeline, timelineFilter]);
+
   if (loading) {
-    return <LoadingSpinner label="Loading electronic medical profile..." />;
+    return <LoadingSpinner label="Loading Patient 360 electronic health record..." />;
   }
 
-  if (!data?.patient) {
+  if (!patient) {
     return (
       <div className="py-12 text-center">
         <p className="text-sm font-semibold text-slate-700">Patient not found.</p>
@@ -170,15 +422,6 @@ export default function PatientProfilePage() {
       </div>
     );
   }
-
-  const { patient, history } = data;
-  const appointments = history?.appointments || [];
-  const prescriptions = history?.prescriptions || [];
-  const labOrders = history?.labOrders || [];
-  const radiologyOrders = history?.radiologyOrders || [];
-  const admissions = history?.admissions || [];
-  const invoices = history?.invoices || [];
-  const referrals = history?.referrals || [];
 
   return (
     <div className="space-y-6">
@@ -197,6 +440,12 @@ export default function PatientProfilePage() {
                 {patient.name}
               </h1>
               <StatusBadge status={patient.status} size="sm" />
+              {patient.abhaNumber && (
+                <span className="flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                  <QrCode className="h-3 w-3" />
+                  ABHA Linked
+                </span>
+              )}
             </div>
             <p className="text-xs text-slate-400">
               Patient ID: <span className="font-semibold text-slate-700 dark:text-slate-300">{patient.patientId}</span> • Registered on {formatDate(patient.createdAt)}
@@ -220,6 +469,13 @@ export default function PatientProfilePage() {
           >
             <Calendar className="h-3.5 w-3.5" />
             <span>Book Appointment</span>
+          </Link>
+          <Link
+            href={`/emergency`}
+            className="flex items-center gap-1.5 rounded-xl bg-rose-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm hover:bg-rose-700 transition-all"
+          >
+            <Siren className="h-3.5 w-3.5" />
+            <span>Emergency Intake</span>
           </Link>
           <Link
             href={`/billing`}
@@ -275,7 +531,7 @@ export default function PatientProfilePage() {
             <AlertTriangle className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-xs text-slate-400">Next of Kin</p>
+            <p className="text-xs text-slate-400">Next of Kin / Contact</p>
             <p className="text-xs font-bold text-slate-800 dark:text-white">
               {patient.emergencyContact?.name || "N/A"}
             </p>
@@ -287,16 +543,19 @@ export default function PatientProfilePage() {
       </div>
 
       {/* Interactive Tabs Navigation */}
-      <div className="flex overflow-x-auto border-b border-slate-200 dark:border-slate-800 gap-1 pb-1">
+      <div className="flex overflow-x-auto border-b border-slate-200 dark:border-slate-800 gap-1 pb-1 custom-scrollbar">
         {[
-          { id: "overview", label: "Medical Overview", icon: Activity, count: null },
-          { id: "referrals", label: "Referral History", icon: Share2, count: referrals.length },
+          { id: "360-timeline", label: "Patient 360 Timeline", icon: History, count: unifiedTimeline.length },
+          { id: "overview", label: "Clinical Alerts", icon: Activity, count: null },
+          { id: "emergency", label: "Emergency Visits", icon: Siren, count: emergencyCases.length },
+          { id: "icu-ot", label: "ICU & Surgeries", icon: Scissors, count: icuRecords.length + otSurgeries.length },
           { id: "appointments", label: "Appointments", icon: Calendar, count: appointments.length },
           { id: "prescriptions", label: "Prescriptions (Rx)", icon: FileSignature, count: prescriptions.length },
-          { id: "lab", label: "Laboratory Reports", icon: FlaskConical, count: labOrders.length },
-          { id: "radiology", label: "Radiology Scans", icon: ScanLine, count: radiologyOrders.length },
+          { id: "lab", label: "Laboratory", icon: FlaskConical, count: labOrders.length },
+          { id: "radiology", label: "Radiology", icon: ScanLine, count: radiologyOrders.length },
           { id: "admissions", label: "Admissions (IPD)", icon: Hotel, count: admissions.length },
           { id: "billing", label: "Billing & Invoices", icon: Receipt, count: invoices.length },
+          { id: "referrals", label: "Referrals", icon: Share2, count: referrals.length },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -328,110 +587,94 @@ export default function PatientProfilePage() {
         })}
       </div>
 
-      {/* Tab: Referrals History */}
-      {activeTab === "referrals" && (
+      {/* Tab: Patient 360 Unified Chronological Timeline */}
+      {activeTab === "360-timeline" && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-              Patient Referral Records ({referrals.length})
-            </h3>
-            <button
-              onClick={() => setIsReferModalOpen(true)}
-              className="flex items-center gap-1.5 rounded-xl bg-purple-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-purple-700"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span>Create Referral</span>
-            </button>
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="flex items-center gap-2">
+              <History className="h-4 w-4 text-brand-600" />
+              <span className="text-xs font-bold text-slate-900 dark:text-white">
+                Complete Clinical & Hospital Course (Patient 360)
+              </span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-1.5">
+              {["All", "Consultation", "Emergency & Critical", "Surgery", "Diagnostics", "Medication", "Inpatient", "Billing"].map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setTimelineFilter(cat)}
+                  className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition ${
+                    timelineFilter === cat
+                      ? "bg-brand-600 text-white"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300"
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {referrals.length === 0 ? (
-            <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center dark:bg-slate-900 dark:border-slate-800">
-              <Share2 className="mx-auto h-10 w-10 text-slate-300 mb-2" />
+          {filteredTimeline.length === 0 ? (
+            <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center dark:border-slate-800 dark:bg-slate-900">
+              <History className="h-10 w-10 text-slate-300 mx-auto mb-2" />
               <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                No referral records found for this patient.
-              </p>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                Click "Refer Patient" above to refer them to another hospital.
+                No events recorded for this filter category.
               </p>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:bg-slate-900 dark:border-slate-800">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/75 text-[11px] font-bold uppercase text-slate-500 dark:border-slate-800 dark:bg-slate-800/40">
-                    <th className="px-5 py-3.5">Referral ID</th>
-                    <th className="px-5 py-3.5">Destination Hospital</th>
-                    <th className="px-5 py-3.5">Referring Doctor</th>
-                    <th className="px-5 py-3.5">Diagnosis</th>
-                    <th className="px-5 py-3.5">Priority</th>
-                    <th className="px-5 py-3.5">Status</th>
-                    <th className="px-5 py-3.5">Date</th>
-                    <th className="px-5 py-3.5 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                  {referrals.map((ref: any) => (
-                    <tr key={ref._id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
-                      <td className="px-5 py-4 font-mono font-bold text-purple-600 dark:text-purple-400">
-                        {ref.referralId}
-                      </td>
-                      <td className="px-5 py-4">
-                        <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1">
-                          <Building2 className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                          <span>{ref.destinationHospital}</span>
+            <div className="relative pl-6 space-y-6 before:absolute before:bottom-0 before:left-2.5 before:top-3 before:w-0.5 before:bg-slate-200 dark:before:bg-slate-800">
+              {filteredTimeline.map((ev: any) => {
+                const Icon = ev.icon;
+                return (
+                  <div key={ev.id} className="relative group">
+                    {/* Node Dot */}
+                    <div className="absolute -left-[27px] top-1.5 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-brand-600 text-white shadow-sm dark:border-slate-900">
+                      <Icon className="h-3 w-3" />
+                    </div>
+
+                    {/* Timeline Event Card */}
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-slate-900 dark:text-white">
+                              {ev.title}
+                            </span>
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${ev.badgeColor || "bg-slate-100 text-slate-700"}`}
+                            >
+                              {ev.badge}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-400 mt-0.5">
+                            {ev.department} • In-Charge:{" "}
+                            <span className="font-semibold text-slate-700 dark:text-slate-300">
+                              {ev.doctor}
+                            </span>
+                          </p>
                         </div>
-                        <p className="text-[10px] text-purple-600 font-semibold">
-                          {ref.destinationDepartment}
-                        </p>
-                      </td>
-                      <td className="px-5 py-4 font-semibold text-slate-800 dark:text-slate-200">
-                        {ref.referringDoctor?.name || "Doctor"}
-                      </td>
-                      <td className="px-5 py-4 max-w-xs truncate text-slate-700 dark:text-slate-300">
-                        {ref.diagnosis}
-                      </td>
-                      <td className="px-5 py-4">
-                        <span
-                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                            ref.priority === "Emergency"
-                              ? "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300"
-                              : ref.priority === "Urgent"
-                              ? "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
-                              : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                          }`}
-                        >
-                          {ref.priority}
+
+                        <span className="text-[11px] font-semibold text-slate-500 whitespace-nowrap">
+                          {formatDate(ev.date)}
                         </span>
-                      </td>
-                      <td className="px-5 py-4">
-                        <StatusBadge status={ref.status} size="sm" />
-                      </td>
-                      <td className="px-5 py-4 text-slate-500">{formatDate(ref.referralDate)}</td>
-                      <td className="px-5 py-4 text-right">
-                        <button
-                          onClick={() => {
-                            setSelectedReferral({ ...ref, patient });
-                            setIsReferSlipModalOpen(true);
-                          }}
-                          className="flex items-center gap-1 rounded-xl bg-purple-50 px-3 py-1.5 text-xs font-bold text-purple-700 hover:bg-purple-100 dark:bg-purple-950 dark:text-purple-300 ml-auto"
-                        >
-                          <Printer className="h-3.5 w-3.5" />
-                          <span>Slip</span>
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+
+                      <p className="mt-2.5 text-xs text-slate-600 dark:text-slate-300 bg-slate-50 p-2.5 rounded-xl dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 leading-relaxed">
+                        {ev.description}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
       )}
 
-      {/* Tab 1: Overview */}
+      {/* Tab: Overview (Clinical Alerts & Chronic Conditions) */}
       {activeTab === "overview" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Clinical Alerts & History */}
           <div className="space-y-6 lg:col-span-2">
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:bg-slate-900 dark:border-slate-800">
               <h3 className="text-sm font-bold text-slate-900 dark:text-white border-b border-slate-100 pb-3 dark:border-slate-800">
@@ -474,26 +717,33 @@ export default function PatientProfilePage() {
             </div>
           </div>
 
-          {/* Quick Stats Sidebar */}
           <div className="space-y-4">
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-800">
-              <h3 className="text-xs font-bold uppercase text-slate-400">Consultation Summary</h3>
+              <h3 className="text-xs font-bold uppercase text-slate-400">Clinical Milestone Summary</h3>
               <div className="mt-3 space-y-2 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Total Visits:</span>
+                  <span className="text-slate-500">Outpatient Visits:</span>
                   <span className="font-bold text-slate-800 dark:text-white">{appointments.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Emergency Triage Visits:</span>
+                  <span className="font-bold text-rose-600">{emergencyCases.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">ICU & Surgeries:</span>
+                  <span className="font-bold text-amber-600">{icuRecords.length + otSurgeries.length}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Active Prescriptions:</span>
                   <span className="font-bold text-slate-800 dark:text-white">{prescriptions.length}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Referrals:</span>
-                  <span className="font-bold text-purple-600">{referrals.length}</span>
-                </div>
-                <div className="flex justify-between">
                   <span className="text-slate-500">Inpatient Admissions:</span>
                   <span className="font-bold text-slate-800 dark:text-white">{admissions.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Diagnostic Reports:</span>
+                  <span className="font-bold text-slate-800 dark:text-white">{labOrders.length + radiologyOrders.length}</span>
                 </div>
               </div>
             </div>
@@ -501,7 +751,91 @@ export default function PatientProfilePage() {
         </div>
       )}
 
-      {/* Tab 2: Appointments */}
+      {/* Tab: Emergency Visits */}
+      {activeTab === "emergency" && (
+        <div className="space-y-4">
+          {emergencyCases.length === 0 ? (
+            <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center dark:bg-slate-900 dark:border-slate-800">
+              <Siren className="h-10 w-10 text-slate-300 mx-auto mb-2" />
+              <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                No emergency casualty visits recorded for this patient.
+              </p>
+            </div>
+          ) : (
+            emergencyCases.map((emg: any) => (
+              <div key={emg._id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-800">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-rose-600">{emg.emergencyId}</span>
+                    <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold text-rose-700">
+                      {emg.triagePriority} Triage
+                    </span>
+                    <StatusBadge status={emg.status} size="sm" />
+                  </div>
+                  <span className="text-[11px] text-slate-400">{formatDate(emg.arrivalTime || emg.createdAt)}</span>
+                </div>
+                <p className="mt-3 text-xs text-slate-700 dark:text-slate-300">
+                  <span className="font-bold">Chief Complaint: </span>{emg.chiefComplaint}
+                </p>
+                {emg.treatmentNotes && (
+                  <p className="mt-1 text-xs text-slate-500">
+                    <span className="font-bold">Treatment Notes: </span>{emg.treatmentNotes}
+                  </p>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* Tab: ICU & OT */}
+      {activeTab === "icu-ot" && (
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3">
+              ICU Stays & Telemetry Records ({icuRecords.length})
+            </h3>
+            {icuRecords.length === 0 ? (
+              <p className="text-xs text-slate-400">No ICU admissions logged.</p>
+            ) : (
+              icuRecords.map((icu: any) => (
+                <div key={icu._id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:bg-slate-900 dark:border-slate-800 mb-3">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="font-bold text-amber-600">{icu.icuId} ({icu.unit})</span>
+                    <StatusBadge status={icu.status} size="sm" />
+                  </div>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 mt-2">
+                    Ventilator: <span className="font-semibold">{icu.ventilatorStatus}</span> • Intensivist: {icu.attendingIntensivist?.name || "Dr. Sarah Jenkins"}
+                  </p>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div>
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3">
+              Operation Theatre Surgeries ({otSurgeries.length})
+            </h3>
+            {otSurgeries.length === 0 ? (
+              <p className="text-xs text-slate-400">No OT procedures logged.</p>
+            ) : (
+              otSurgeries.map((ot: any) => (
+                <div key={ot._id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:bg-slate-900 dark:border-slate-800 mb-3">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="font-bold text-teal-600">{ot.procedureName} ({ot.otScheduleId})</span>
+                    <StatusBadge status={ot.surgeryStatus} size="sm" />
+                  </div>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
+                    Surgeon: {ot.leadSurgeon?.name} • Anesthesia: {ot.anesthesiaType} • Suite: {ot.theatreNumber}
+                  </p>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Tab: Appointments */}
       {activeTab === "appointments" && (
         <div className="space-y-4">
           {appointments.map((apt: any) => (
@@ -532,7 +866,7 @@ export default function PatientProfilePage() {
         </div>
       )}
 
-      {/* Tab 3: Prescriptions */}
+      {/* Tab: Prescriptions */}
       {activeTab === "prescriptions" && (
         <div className="space-y-4">
           {prescriptions.map((rx: any) => (
@@ -570,7 +904,7 @@ export default function PatientProfilePage() {
         </div>
       )}
 
-      {/* Tab 4: Lab */}
+      {/* Tab: Lab */}
       {activeTab === "lab" && (
         <div className="space-y-4">
           {labOrders.map((lab: any) => (
@@ -600,7 +934,7 @@ export default function PatientProfilePage() {
         </div>
       )}
 
-      {/* Tab 5: Radiology */}
+      {/* Tab: Radiology */}
       {activeTab === "radiology" && (
         <div className="space-y-4">
           {radiologyOrders.map((rad: any) => (
@@ -610,18 +944,20 @@ export default function PatientProfilePage() {
             >
               <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
                 <div>
-                  <span className="text-xs font-bold text-indigo-600">{rad.orderId}</span>
-                  <p className="text-[11px] text-slate-400">{rad.modality} - {rad.bodyPart}</p>
+                  <span className="text-xs font-bold text-cyan-600">{rad.orderId}</span>
+                  <p className="text-[11px] text-slate-400">Modality: {rad.modality} ({rad.bodyPart})</p>
                 </div>
                 <StatusBadge status={rad.status} size="sm" />
               </div>
-              <p className="mt-3 text-xs text-slate-600 dark:text-slate-300">{rad.clinicalNotes}</p>
+              <p className="mt-3 text-xs text-slate-700 dark:text-slate-300">
+                <span className="font-bold">Impression: </span>{rad.impression || rad.clinicalNotes || "Pending report"}
+              </p>
             </div>
           ))}
         </div>
       )}
 
-      {/* Tab 6: Admissions */}
+      {/* Tab: Admissions */}
       {activeTab === "admissions" && (
         <div className="space-y-4">
           {admissions.map((adm: any) => (
@@ -631,32 +967,20 @@ export default function PatientProfilePage() {
             >
               <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
                 <div>
-                  <span className="text-xs font-bold text-brand-600">{adm.admissionId}</span>
-                  <p className="text-[11px] text-slate-400">Ward: {adm.ward} • Bed: {adm.bed?.bedNumber || "Assigned"}</p>
+                  <span className="text-xs font-bold text-violet-600">{adm.admissionId}</span>
+                  <p className="text-[11px] text-slate-400">Ward: {adm.ward} • Bed: {adm.bed?.bedNumber || "General"}</p>
                 </div>
                 <StatusBadge status={adm.status} size="sm" />
               </div>
-
-              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                <div>
-                  <p className="text-slate-400 font-semibold">Attending Physician</p>
-                  <p className="font-bold text-slate-800 dark:text-white">{adm.doctor?.name}</p>
-                </div>
-                <div>
-                  <p className="text-slate-400 font-semibold">Admission Date</p>
-                  <p className="font-bold text-slate-800 dark:text-white">{formatDate(adm.admissionDate)}</p>
-                </div>
-                <div className="sm:col-span-2">
-                  <p className="text-slate-400 font-semibold">Reason for Admission</p>
-                  <p className="text-slate-700 dark:text-slate-300 mt-0.5">{adm.admissionReason}</p>
-                </div>
-              </div>
+              <p className="mt-3 text-xs text-slate-700 dark:text-slate-300">
+                <span className="font-bold">Reason: </span>{adm.admissionReason}
+              </p>
             </div>
           ))}
         </div>
       )}
 
-      {/* Tab 7: Billing */}
+      {/* Tab: Billing */}
       {activeTab === "billing" && (
         <div className="space-y-4">
           {invoices.map((inv: any) => (
@@ -666,265 +990,149 @@ export default function PatientProfilePage() {
             >
               <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
                 <div>
-                  <span className="text-xs font-bold text-brand-600">{inv.invoiceNumber}</span>
+                  <span className="text-xs font-bold text-slate-900 dark:text-white">{inv.invoiceNumber}</span>
                   <p className="text-[11px] text-slate-400">Date: {formatDate(inv.invoiceDate)}</p>
                 </div>
                 <StatusBadge status={inv.paymentStatus} size="sm" />
               </div>
-
-              <div className="mt-4 flex items-center justify-between text-xs">
-                <div>
-                  <p className="text-slate-500">Total Billed: <span className="font-bold text-slate-900 dark:text-white">{formatCurrency(inv.totalAmount)}</span></p>
-                  <p className="text-slate-500">Paid: <span className="font-bold text-emerald-600">{formatCurrency(inv.paidAmount)}</span></p>
-                </div>
-                <Link
-                  href={`/billing/${inv._id}`}
-                  className="flex items-center gap-1 rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200"
-                >
-                  <Printer className="h-3.5 w-3.5" />
-                  <span>View Slip</span>
-                </Link>
+              <div className="mt-3 flex justify-between text-xs">
+                <span className="text-slate-500">Total Billed: {formatCurrency(inv.totalAmount)}</span>
+                <span className="font-bold text-emerald-600">Paid: {formatCurrency(inv.paidAmount)}</span>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* REFER PATIENT MODAL */}
+      {/* Tab: Referrals */}
+      {activeTab === "referrals" && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+              Patient Referral Records ({referrals.length})
+            </h3>
+            <button
+              onClick={() => setIsReferModalOpen(true)}
+              className="flex items-center gap-1.5 rounded-xl bg-purple-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-purple-700"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>Create Referral</span>
+            </button>
+          </div>
+
+          {referrals.length === 0 ? (
+            <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center dark:bg-slate-900 dark:border-slate-800">
+              <Share2 className="mx-auto h-10 w-10 text-slate-300 mb-2" />
+              <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                No referral records found for this patient.
+              </p>
+            </div>
+          ) : (
+            referrals.map((ref: any) => (
+              <div key={ref._id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-800">
+                <div className="flex justify-between items-center text-xs border-b border-slate-100 pb-2 dark:border-slate-800">
+                  <span className="font-bold text-purple-600">{ref.referralId} • To: {ref.destinationHospital}</span>
+                  <StatusBadge status={ref.status} size="sm" />
+                </div>
+                <p className="text-xs text-slate-700 dark:text-slate-300 mt-2">
+                  <span className="font-bold">Diagnosis: </span>{ref.diagnosis} • Reason: {ref.reasonForReferral}
+                </p>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* Modal: Create Referral */}
       <Modal
         isOpen={isReferModalOpen}
         onClose={() => setIsReferModalOpen(false)}
-        title={`Refer Patient — ${patient.name}`}
-        subtitle="Transfer or refer this patient to another hospital / healthcare institution"
-        maxWidth="2xl"
+        title="Issue Inter-Hospital Patient Referral"
+        size="lg"
       >
-        <form onSubmit={handleCreateReferral} className="space-y-4 text-xs">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+        <form onSubmit={handleCreateReferral} className="space-y-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Referring Doctor *
-              </label>
-              <select
-                required
-                value={referralForm.referringDoctor}
-                onChange={(e) =>
-                  setReferralForm({ ...referralForm, referringDoctor: e.target.value })
-                }
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-800 dark:bg-slate-800 dark:text-white"
-              >
-                {doctors.map((d) => (
-                  <option key={d._id} value={d._id}>
-                    {d.name} ({d.department})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Priority Level *
-              </label>
-              <select
-                value={referralForm.priority}
-                onChange={(e) =>
-                  setReferralForm({
-                    ...referralForm,
-                    priority: e.target.value as "Normal" | "Urgent" | "Emergency",
-                  })
-                }
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs font-bold outline-none focus:border-brand-500 dark:border-slate-800 dark:bg-slate-800 dark:text-white"
-              >
-                <option value="Normal">Normal</option>
-                <option value="Urgent">Urgent</option>
-                <option value="Emergency">Emergency</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <div>
-              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Destination Hospital / Institution *
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Destination Hospital *
               </label>
               <input
                 type="text"
                 required
-                placeholder="e.g. AIIMS New Delhi / Apollo Hospital"
+                placeholder="e.g. All India Institute of Medical Sciences (AIIMS)"
                 value={referralForm.destinationHospital}
                 onChange={(e) =>
                   setReferralForm({ ...referralForm, destinationHospital: e.target.value })
                 }
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-800 dark:bg-slate-800 dark:text-white"
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-900 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
             </div>
 
             <div>
-              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Destination Department *
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Department
               </label>
               <input
                 type="text"
-                required
-                placeholder="e.g. Cardiothoracic Surgery"
                 value={referralForm.destinationDepartment}
                 onChange={(e) =>
                   setReferralForm({ ...referralForm, destinationDepartment: e.target.value })
                 }
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-800 dark:bg-slate-800 dark:text-white"
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-900 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
             </div>
           </div>
 
-          <div>
-            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Primary Diagnosis *
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. Left Main Coronary Artery Disease"
-              value={referralForm.diagnosis}
-              onChange={(e) =>
-                setReferralForm({ ...referralForm, diagnosis: e.target.value })
-              }
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs outline-none focus:border-brand-500 dark:border-slate-800 dark:bg-slate-800 dark:text-white font-semibold"
-            />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Diagnosis *
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Complex Triple Vessel CAD"
+                value={referralForm.diagnosis}
+                onChange={(e) => setReferralForm({ ...referralForm, diagnosis: e.target.value })}
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-900 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Reason for Referral *
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Higher tertiary intervention required"
+                value={referralForm.reasonForReferral}
+                onChange={(e) =>
+                  setReferralForm({ ...referralForm, reasonForReferral: e.target.value })
+                }
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-900 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              />
+            </div>
           </div>
 
-          <div>
-            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Reason for Referral *
-            </label>
-            <textarea
-              required
-              rows={2}
-              placeholder="e.g. Requires urgent specialized robotic intervention..."
-              value={referralForm.reasonForReferral}
-              onChange={(e) =>
-                setReferralForm({ ...referralForm, reasonForReferral: e.target.value })
-              }
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-xs outline-none focus:border-brand-500 dark:border-slate-800 dark:bg-slate-800 dark:text-white"
-            />
-          </div>
-
-          <div>
-            <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-              Clinical Summary & Present Management
-            </label>
-            <textarea
-              rows={3}
-              placeholder="Patient vitals, current medications, investigations..."
-              value={referralForm.clinicalSummary}
-              onChange={(e) =>
-                setReferralForm({ ...referralForm, clinicalSummary: e.target.value })
-              }
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-2.5 text-xs outline-none focus:border-brand-500 dark:border-slate-800 dark:bg-slate-800 dark:text-white"
-            />
-          </div>
-
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
             <button
               type="button"
               onClick={() => setIsReferModalOpen(false)}
-              className="rounded-xl border border-slate-200 px-4 py-2 font-bold"
+              className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submittingReferral}
-              className="rounded-xl bg-purple-600 px-6 py-2 font-bold text-white shadow hover:bg-purple-700 disabled:opacity-50"
+              className="rounded-xl bg-purple-600 px-5 py-2 text-xs font-bold text-white hover:bg-purple-700 shadow-md shadow-purple-600/20"
             >
-              {submittingReferral ? "Issuing..." : "Submit Referral"}
+              {submittingReferral ? "Issuing..." : "Issue Official Referral"}
             </button>
           </div>
         </form>
       </Modal>
-
-      {/* VIEW / PRINT REFERRAL SLIP MODAL */}
-      {selectedReferral && (
-        <Modal
-          isOpen={isReferSlipModalOpen}
-          onClose={() => setIsReferSlipModalOpen(false)}
-          title={`Referral Slip — ${selectedReferral.referralId}`}
-          subtitle="Hospital Transfer Letter"
-          maxWidth="2xl"
-        >
-          <div className="space-y-4 text-xs">
-            <div className="border-b-2 border-slate-900 pb-3 text-center dark:border-white">
-              <h2 className="text-base font-black uppercase text-slate-900 dark:text-white">
-                MediPulse Hospital & Medical Institute
-              </h2>
-              <p className="text-[10px] text-slate-500">Official Clinical Transfer Referral Slip</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 rounded-xl bg-slate-50 p-3 dark:bg-slate-800/60">
-              <div>
-                <p className="text-[10px] text-slate-400">Referral ID</p>
-                <p className="font-mono font-bold text-purple-600">{selectedReferral.referralId}</p>
-                <p className="text-[10px] text-slate-500">Date: {formatDate(selectedReferral.referralDate)}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-[10px] text-slate-400">Status</p>
-                <p className="font-bold text-emerald-600">{selectedReferral.status}</p>
-                <p className="text-[10px] font-bold text-purple-600">Priority: {selectedReferral.priority}</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl border p-3">
-                <p className="text-[10px] font-bold text-slate-400">Patient</p>
-                <p className="font-bold">{patient.name} ({patient.patientId})</p>
-                <p className="text-[11px] text-slate-500">{patient.gender}, {patient.age}y • Blood: {patient.bloodGroup}</p>
-              </div>
-              <div className="rounded-xl border p-3">
-                <p className="text-[10px] font-bold text-slate-400">Referred To</p>
-                <p className="font-bold">{selectedReferral.destinationHospital}</p>
-                <p className="text-[11px] text-purple-600 font-semibold">{selectedReferral.destinationDepartment}</p>
-              </div>
-            </div>
-
-            <div>
-              <p className="font-bold">Diagnosis:</p>
-              <p className="rounded-lg bg-slate-50 p-2 text-slate-800 dark:bg-slate-800 dark:text-slate-200 mt-1">
-                {selectedReferral.diagnosis}
-              </p>
-            </div>
-
-            <div>
-              <p className="font-bold">Reason for Referral:</p>
-              <p className="rounded-lg bg-slate-50 p-2 text-slate-700 dark:bg-slate-800 dark:text-slate-300 mt-1">
-                {selectedReferral.reasonForReferral}
-              </p>
-            </div>
-
-            {selectedReferral.clinicalSummary && (
-              <div>
-                <p className="font-bold">Clinical Summary:</p>
-                <p className="rounded-lg bg-slate-50 p-2 text-slate-700 dark:bg-slate-800 dark:text-slate-300 mt-1 whitespace-pre-line">
-                  {selectedReferral.clinicalSummary}
-                </p>
-              </div>
-            )}
-
-            <div className="flex justify-end gap-2 pt-3 border-t">
-              <button
-                onClick={() => setIsReferSlipModalOpen(false)}
-                className="rounded-xl border px-4 py-2 font-bold"
-              >
-                Close
-              </button>
-              <button
-                onClick={() => window.print()}
-                className="flex items-center gap-1 rounded-xl bg-slate-900 px-4 py-2 font-bold text-white hover:bg-brand-600 dark:bg-slate-800"
-              >
-                <Printer className="h-3.5 w-3.5" />
-                <span>Print Slip</span>
-              </button>
-            </div>
-          </div>
-        </Modal>
-      )}
     </div>
   );
 }

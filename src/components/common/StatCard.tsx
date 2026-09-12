@@ -6,11 +6,12 @@ interface StatCardProps {
   title: string;
   value: string | number;
   subtitle?: string;
+  description?: string;
   change?: string;
   icon: LucideIcon | any;
   trend?:
     | {
-        value: string;
+        value: string | number;
         isPositive?: boolean;
       }
     | "up"
@@ -62,6 +63,7 @@ export function StatCard({
   title,
   value,
   subtitle,
+  description,
   change,
   icon: Icon,
   trend,
@@ -70,7 +72,7 @@ export function StatCard({
 }: StatCardProps) {
   const scheme = colorMap[colorScheme] || colorMap.blue;
 
-  const displaySubtitle = subtitle || change;
+  const displaySubtitle = subtitle || description || change;
 
   const isPositive =
     typeof trend === "object"

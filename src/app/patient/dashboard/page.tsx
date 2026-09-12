@@ -67,8 +67,6 @@ export default function PatientDashboardPage() {
     loadPatientData();
   }, []);
 
-  if (loading) return <LoadingSpinner />;
-
   const upcomingApts = appointments.filter((a) => a.status !== "Cancelled");
   const pendingBills = invoices.filter((i) => i.paymentStatus !== "Paid");
 
@@ -171,27 +169,65 @@ export default function PatientDashboardPage() {
                 </Link>
               </div>
             ) : (
-              appointments.slice(0, 4).map((apt: any) => (
-                <div
-                  key={apt._id}
-                  className="flex items-center justify-between rounded-xl border border-slate-100 p-3.5 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/40 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-50 text-xs font-bold text-teal-700 dark:bg-teal-950 dark:text-teal-300">
-                      <Calendar className="h-5 w-5" />
-                    </span>
-                    <div>
-                      <p className="text-xs font-bold text-slate-800 dark:text-white">
-                        {apt.doctor?.name || "Hospital Physician"}
-                      </p>
-                      <p className="text-[11px] text-slate-400">
-                        {apt.doctor?.department || "Department"} • {apt.appointmentDate} ({apt.timeSlot})
-                      </p>
+              appointments.slice(0, 4).map((apt: any) => {
+                const isVirtual = apt.consultationType === "Virtual Teleconsultation" || apt.type === "Teleconsultation";
+                const sessionRoom = apt.teleconsultationSession?.roomId || `TEL-${apt.appointmentId?.replace("APT-", "") || apt._id?.slice(-4)}`;
+
+                return (
+                  <div
+                    key={apt._id}
+                    className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border p-3.5 transition-colors ${
+                      isVirtual
+                        ? "border-sky-200/80 bg-sky-50/40 hover:bg-sky-50/70 dark:border-sky-900/40 dark:bg-sky-950/20"
+                        : "border-slate-100 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800/40"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`flex h-10 w-10 items-center justify-center rounded-xl text-xs font-bold shrink-0 ${
+                          isVirtual
+                            ? "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300"
+                            : "bg-teal-50 text-teal-700 dark:bg-teal-950 dark:text-teal-300"
+                        }`}
+                      >
+                        {isVirtual ? <Video className="h-5 w-5" /> : <Calendar className="h-5 w-5" />}
+                      </span>
+                      <div>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="text-xs font-bold text-slate-800 dark:text-white">
+                            {apt.doctor?.name || "Hospital Physician"}
+                          </p>
+                          <span
+                            className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
+                              isVirtual
+                                ? "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300"
+                                : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                            }`}
+                          >
+                            {isVirtual ? "Virtual Video" : "In-Person"}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-400">
+                          {apt.doctor?.department || "Department"} • {apt.appointmentDate} ({apt.timeSlot})
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 self-end sm:self-center">
+                      <StatusBadge status={apt.status || "Confirmed"} />
+                      {isVirtual && apt.status !== "Completed" && apt.status !== "Cancelled" && (
+                        <Link
+                          href={`/teleconsultation?room=${sessionRoom}&appointment=${apt.appointmentId}&role=patient`}
+                          className="rounded-xl bg-sky-600 px-3 py-1 text-[11px] font-extrabold text-white hover:bg-sky-700 transition-all flex items-center gap-1"
+                        >
+                          <Video className="h-3 w-3" />
+                          <span>Join Video</span>
+                        </Link>
+                      )}
                     </div>
                   </div>
-                  <StatusBadge status={apt.status || "Confirmed"} />
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>

@@ -43,8 +43,6 @@ export default function PatientInvoicesPage() {
     toast.success(`Online payment gateway initiated for ${inv.invoiceNumber} (${formatCurrency(inv.balanceAmount || inv.totalAmount)})`);
   };
 
-  if (loading) return <LoadingSpinner />;
-
   return (
     <div className="space-y-6">
       <div>

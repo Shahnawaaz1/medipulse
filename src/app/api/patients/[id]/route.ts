@@ -7,6 +7,13 @@ import LabOrder from "@/models/LabOrder";
 import RadiologyOrder from "@/models/RadiologyOrder";
 import Admission from "@/models/Admission";
 import Invoice from "@/models/Invoice";
+import EmergencyCase from "@/models/EmergencyCase";
+import IcuRecord from "@/models/IcuRecord";
+import OperationTheatre from "@/models/OperationTheatre";
+import NursingCare from "@/models/NursingCare";
+import DischargeSummary from "@/models/DischargeSummary";
+import AbhaCard from "@/models/AbhaCard";
+import OpdRecord from "@/models/OpdRecord";
 import Referral from "@/models/Referral";
 
 export async function GET(
@@ -36,6 +43,13 @@ export async function GET(
       admissions,
       invoices,
       referrals,
+      emergencyCases,
+      icuRecords,
+      otSurgeries,
+      nursingRecords,
+      dischargeSummaries,
+      abhaCard,
+      opdRecords,
     ] = await Promise.all([
       Appointment.find({ patient: patientMongoId }).populate("doctor").sort({ appointmentDate: -1 }),
       Prescription.find({ patient: patientMongoId }).populate("doctor").sort({ date: -1 }),
@@ -44,6 +58,13 @@ export async function GET(
       Admission.find({ patient: patientMongoId }).populate("doctor bed").sort({ admissionDate: -1 }),
       Invoice.find({ patient: patientMongoId }).populate("doctor").sort({ invoiceDate: -1 }),
       Referral.find({ patient: patientMongoId }).populate("referringDoctor").sort({ referralDate: -1 }),
+      EmergencyCase.find({ patient: patientMongoId }).populate("assignedDoctor").sort({ arrivalTime: -1 }),
+      IcuRecord.find({ patient: patientMongoId }).populate("bed attendingIntensivist").sort({ admittedAt: -1 }),
+      OperationTheatre.find({ patient: patientMongoId }).populate("leadSurgeon assistantSurgeon anesthetist").sort({ scheduledDate: -1 }),
+      NursingCare.find({ patient: patientMongoId }).sort({ date: -1 }),
+      DischargeSummary.find({ patient: patientMongoId }).populate("attendingDoctor").sort({ dischargeDate: -1 }),
+      AbhaCard.findOne({ $or: [{ patientId: patient.patientId }, { patientId: patientMongoId.toString() }] }),
+      OpdRecord.find({ patient: patientMongoId }).populate("doctor").sort({ date: -1 }),
     ]);
 
     return NextResponse.json({
@@ -57,6 +78,13 @@ export async function GET(
         admissions,
         invoices,
         referrals,
+        emergencyCases,
+        icuRecords,
+        otSurgeries,
+        nursingRecords,
+        dischargeSummaries,
+        abhaCard,
+        opdRecords,
       },
     });
   } catch (error: any) {

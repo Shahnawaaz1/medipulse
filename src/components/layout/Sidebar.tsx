@@ -34,6 +34,10 @@ import {
   FileSpreadsheet,
   CreditCard,
   FolderHeart,
+  Siren,
+  Activity,
+  Scissors,
+  ShieldAlert,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
@@ -58,6 +62,32 @@ const allHospitalNavigationGroups: NavGroup[] = [
     items: [
       { name: "Hospital ERP Dashboard", href: "/dashboard", icon: LayoutDashboard },
       { name: "Public Website (Outer)", href: "/", icon: Globe, badge: "Live Site" },
+    ],
+  },
+  {
+    title: "CRITICAL CARE & SURGERY",
+    items: [
+      {
+        name: "Emergency & Casualty",
+        href: "/emergency",
+        icon: Siren,
+        badge: "24x7 Triage",
+        badgeColor: "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300",
+      },
+      {
+        name: "ICU Management Live",
+        href: "/icu",
+        icon: Activity,
+        badge: "Telemetry",
+        badgeColor: "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+      },
+      {
+        name: "Operation Theatre (OT)",
+        href: "/ot",
+        icon: Scissors,
+        badge: "Schedules",
+        badgeColor: "bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-300",
+      },
     ],
   },
   {
@@ -89,12 +119,12 @@ const allHospitalNavigationGroups: NavGroup[] = [
   {
     title: "PATIENT MANAGEMENT",
     items: [
-      { name: "Patients List", href: "/patients", icon: Users },
+      { name: "Patients 360 List", href: "/patients", icon: Users },
       {
         name: "Patient Referrals",
         href: "/referrals",
         icon: Share2,
-        badge: "New",
+        badge: "Network",
         badgeColor: "bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300",
       },
       { name: "Register Patient", href: "/patients/new", icon: UserPlus },
@@ -111,7 +141,7 @@ const allHospitalNavigationGroups: NavGroup[] = [
   {
     title: "INPATIENT & BEDS",
     items: [
-      { name: "IPD Admissions", href: "/ipd", icon: Hotel },
+      { name: "IPD Admissions & Discharge", href: "/ipd", icon: Hotel },
       { name: "Bed Matrix Live", href: "/beds", icon: Bed },
     ],
   },
@@ -148,8 +178,15 @@ const allHospitalNavigationGroups: NavGroup[] = [
   {
     title: "OPERATIONS & SYSTEM",
     items: [
-      { name: "Inventory & Supplies", href: "/inventory", icon: Package },
-      { name: "Reports & Analytics", href: "/reports", icon: BarChart3 },
+      { name: "Inventory & Procurement", href: "/inventory", icon: Package },
+      { name: "Hospital Reports", href: "/reports", icon: BarChart3 },
+      {
+        name: "Security Audit Logs",
+        href: "/audit-logs",
+        icon: ShieldAlert,
+        badge: "Admin",
+        badgeColor: "bg-slate-200 text-slate-800 dark:bg-slate-800 dark:text-slate-300",
+      },
       { name: "Hospital Settings", href: "/settings", icon: Settings },
     ],
   },
@@ -347,7 +384,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                           className={cn(
                             "rounded-full px-2 py-0.5 text-[10px] font-bold",
                             item.badgeColor ||
-                              "bg-teal-100 text-teal-700 dark:bg-teal-900/60 dark:text-teal-300"
+                            "bg-teal-100 text-teal-700 dark:bg-teal-900/60 dark:text-teal-300"
                           )}
                         >
                           {item.badge}

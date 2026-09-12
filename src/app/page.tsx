@@ -27,6 +27,8 @@ import {
   MapPin,
   Mail,
   Zap,
+  Menu,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
@@ -36,6 +38,7 @@ export default function PublicLandingPage() {
   const [doctors, setDoctors] = useState<any[]>([]);
   const [packages, setPackages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Quick Appointment Form State
   const [selectedDept, setSelectedDept] = useState("");
@@ -378,13 +381,109 @@ export default function PublicLandingPage() {
 
             <Link
               href="/dashboard"
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-teal-500 px-4 py-2 text-xs font-extrabold text-white shadow-md shadow-brand-500/20 hover:brightness-110 transition-all"
+              className="hidden xs:flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-teal-500 px-3.5 sm:px-4 py-2 text-xs font-extrabold text-white shadow-md shadow-brand-500/20 hover:brightness-110 transition-all"
             >
               <Layers className="h-4 w-4" />
-              <span>Hospital ERP</span>
+              <span className="hidden sm:inline">Hospital ERP</span>
+              <span className="sm:hidden">ERP</span>
             </Link>
+
+            {/* Mobile Menu Toggle Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-200"
+              aria-label="Toggle Navigation Menu"
+            >
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Navigation Drawer */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden border-t border-slate-100 bg-white/98 backdrop-blur-xl px-4 py-5 space-y-3 dark:border-slate-800 dark:bg-slate-900/98 shadow-xl animate-in slide-in-from-top-2 duration-200">
+            <nav className="flex flex-col space-y-2 text-sm font-bold text-slate-700 dark:text-slate-200">
+              <a
+                href="#departments"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800"
+              >
+                <span>Medical Specialities</span>
+                <ChevronRight className="h-4 w-4 text-slate-400" />
+              </a>
+              <a
+                href="#doctors"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800"
+              >
+                <span>Find Doctors & Specialists</span>
+                <ChevronRight className="h-4 w-4 text-slate-400" />
+              </a>
+              <a
+                href="#abha"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800"
+              >
+                <div className="flex items-center gap-2">
+                  <span>ABHA Govt Health Card</span>
+                  <span className="rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold px-1.5 py-0.2">
+                    Govt
+                  </span>
+                </div>
+                <ChevronRight className="h-4 w-4 text-slate-400" />
+              </a>
+              <a
+                href="#ai-assistant"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800"
+              >
+                <div className="flex items-center gap-2">
+                  <span>AI Symptom Triage</span>
+                  <Sparkles className="h-3.5 w-3.5 text-purple-500" />
+                </div>
+                <ChevronRight className="h-4 w-4 text-slate-400" />
+              </a>
+              <a
+                href="#packages"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800"
+              >
+                <span>Health Packages</span>
+                <ChevronRight className="h-4 w-4 text-slate-400" />
+              </a>
+              <a
+                href="#teleconsult"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800"
+              >
+                <div className="flex items-center gap-2">
+                  <span>Virtual Telemedicine</span>
+                  <Video className="h-3.5 w-3.5 text-sky-500" />
+                </div>
+                <ChevronRight className="h-4 w-4 text-slate-400" />
+              </a>
+            </nav>
+
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-2">
+              <Link
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl bg-slate-100 text-xs font-bold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200"
+              >
+                <Lock className="h-3.5 w-3.5 text-slate-400" />
+                <span>Staff Login</span>
+              </Link>
+              <Link
+                href="/dashboard"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl bg-brand-600 text-xs font-bold text-white hover:bg-brand-700"
+              >
+                <Layers className="h-3.5 w-3.5" />
+                <span>Hospital ERP</span>
+              </Link>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Hero Section with Quick Booking Widget */}

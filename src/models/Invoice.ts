@@ -57,5 +57,8 @@ const InvoiceSchema = new Schema(
   { timestamps: true }
 );
 
+InvoiceSchema.index({ invoiceDate: 1, paymentStatus: 1 });
+InvoiceSchema.index({ patient: 1, invoiceDate: -1 });
+
 export const Invoice = models.Invoice || model("Invoice", InvoiceSchema);
 export default Invoice;

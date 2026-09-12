@@ -42,7 +42,6 @@ export default function AccountsDashboardPage() {
     loadAccountsData();
   }, []);
 
-  if (loading) return <LoadingSpinner />;
 
   return (
     <div className="space-y-6">

@@ -49,8 +49,6 @@ export default function ReceptionDashboardPage() {
     loadReceptionData();
   }, []);
 
-  if (loading) return <LoadingSpinner />;
-
   return (
     <div className="space-y-6">
       {/* Top Banner */}

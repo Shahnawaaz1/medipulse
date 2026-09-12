@@ -35,5 +35,8 @@ const DoctorSchema = new Schema(
   { timestamps: true }
 );
 
+DoctorSchema.index({ department: 1, status: 1 });
+DoctorSchema.index({ email: 1 });
+
 export const Doctor = models.Doctor || model("Doctor", DoctorSchema);
 export default Doctor;

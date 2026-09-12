@@ -41,8 +41,6 @@ export default function PatientRecordsPage() {
     loadRecord();
   }, []);
 
-  if (loading) return <LoadingSpinner />;
-
   return (
     <div className="space-y-6">
       <div>

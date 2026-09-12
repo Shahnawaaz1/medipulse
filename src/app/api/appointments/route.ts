@@ -5,6 +5,7 @@ import Appointment from "@/models/Appointment";
 import Notification from "@/models/Notification";
 import Patient from "@/models/Patient";
 import Doctor from "@/models/Doctor";
+import TeleconsultationSession from "@/models/TeleconsultationSession";
 import { getPatientScope, getUserFromRequest } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
@@ -15,9 +16,11 @@ export async function GET(req: NextRequest) {
     const doctorId = searchParams.get("doctor") || "";
     const status = searchParams.get("status") || "";
     const patientId = searchParams.get("patient") || "";
+    const consultationType = searchParams.get("consultationType") || "";
 
     const query: any = {};
     const patientScope = getPatientScope(req);
+    const user = getUserFromRequest(req);
 
     // Patient Data Isolation
     if (patientScope.isPatient) {
@@ -34,14 +37,27 @@ export async function GET(req: NextRequest) {
       } else {
         return NextResponse.json({ success: true, appointments: [] });
       }
-    } else {
-      if (patientId) {
-        if (mongoose.Types.ObjectId.isValid(patientId)) {
-          query.patient = patientId;
-        } else {
-          const p = await Patient.findOne({ patientId });
-          if (p) query.patient = p._id;
+    } else if (user && (user.role === "DOCTOR" || (user as any).role === "doctor")) {
+      // Doctor Data Isolation: if user is doctor, filter to their assigned doctor profile if not explicitly searching another
+      if (!doctorId) {
+        let docRecord = await Doctor.findOne({
+          $or: [
+            { email: user.email?.toLowerCase() },
+            { name: new RegExp(user.name, "i") },
+          ],
+        });
+        if (docRecord) {
+          query.doctor = docRecord._id;
         }
+      }
+    }
+
+    if (patientId && !patientScope.isPatient) {
+      if (mongoose.Types.ObjectId.isValid(patientId)) {
+        query.patient = patientId;
+      } else {
+        const p = await Patient.findOne({ patientId });
+        if (p) query.patient = p._id;
       }
     }
 
@@ -55,10 +71,12 @@ export async function GET(req: NextRequest) {
       }
     }
     if (status) query.status = status;
+    if (consultationType) query.consultationType = consultationType;
 
     const appointments = await Appointment.find(query)
       .populate("patient")
       .populate("doctor")
+      .populate("teleconsultationSession")
       .sort({ appointmentDate: -1, timeSlot: 1 });
 
     return NextResponse.json({ success: true, appointments, data: appointments });
@@ -184,11 +202,17 @@ export async function POST(req: NextRequest) {
       "General Medical Consultation"
     ).trim();
 
-    // 5. Resolve Appointment Date & Time Slot
+    // 5. Resolve Appointment Date & Time Slot & Consultation Type
     const appointmentDate = body.appointmentDate || body.date || new Date().toISOString().split("T")[0];
     const timeSlot = body.timeSlot || body.slot || body.time || "09:00 AM - 09:30 AM";
-    const type = body.type || "General";
+    const isVirtual =
+      body.consultationType === "Virtual Teleconsultation" ||
+      body.type === "Teleconsultation" ||
+      body.type === "Virtual Teleconsultation";
+    const consultationType = isVirtual ? "Virtual Teleconsultation" : (body.consultationType || "In-Person");
+    const type = isVirtual ? "Teleconsultation" : (body.type || "General");
     const status = body.status || "Scheduled";
+    const fee = Number(body.fee) || (isVirtual ? (doctorDoc.teleconsultationFee || 500) : (doctorDoc.consultationFee || 500));
 
     // 6. Check for double booking
     const existing = await Appointment.findOne({
@@ -223,25 +247,70 @@ export async function POST(req: NextRequest) {
       appointmentDate,
       timeSlot,
       type,
+      consultationType,
+      fee,
       status,
       reason,
       vitals: body.vitals || {},
       clinicalNotes: body.clinicalNotes || "",
     });
 
+    let teleSession: any = null;
+    if (isVirtual) {
+      const sessionCount = await TeleconsultationSession.countDocuments();
+      const secureSessionId = `TEL-${new Date().getFullYear()}-${String(sessionCount + 101).padStart(4, "0")}`;
+
+      teleSession = await TeleconsultationSession.create({
+        sessionId: secureSessionId,
+        roomId: secureSessionId,
+        appointment: newAppointment._id,
+        patient: patientDoc._id,
+        doctor: doctorDoc._id,
+        scheduledDate: appointmentDate,
+        scheduledTime: timeSlot,
+        sessionStatus: "Scheduled",
+        connectionStatus: "Idle",
+        chatMessages: [],
+      });
+
+      newAppointment.teleconsultationSession = teleSession._id;
+      await newAppointment.save();
+    }
+
     const populated = await Appointment.findById(newAppointment._id)
       .populate("patient")
-      .populate("doctor");
+      .populate("doctor")
+      .populate("teleconsultationSession");
 
-    // 9. Create System Notification
+    // 9. Create System Notifications
     try {
-      await Notification.create({
-        title: "New Appointment Booked",
-        message: `${patientDoc.name} booked with ${doctorDoc.name} on ${appointmentDate} (${timeSlot}) for ${department}.`,
-        type: "info",
-        link: "/appointments",
-        read: false,
-      });
+      if (isVirtual && teleSession) {
+        // Patient Notification
+        await Notification.create({
+          title: "Virtual Teleconsultation Confirmed",
+          message: `Your video consultation with ${doctorDoc.name} (${department}) is scheduled for ${appointmentDate} at ${timeSlot}. Room: ${teleSession.sessionId}`,
+          type: "info",
+          link: `/teleconsultation?room=${teleSession.roomId}&appointment=${appointmentId}`,
+          read: false,
+        });
+
+        // Doctor Notification
+        await Notification.create({
+          title: "New Virtual Teleconsultation",
+          message: `Patient ${patientDoc.name} booked a video consultation for ${appointmentDate} at ${timeSlot}.`,
+          type: "info",
+          link: `/teleconsultation?room=${teleSession.roomId}&appointment=${appointmentId}`,
+          read: false,
+        });
+      } else {
+        await Notification.create({
+          title: "New In-Person Appointment Booked",
+          message: `${patientDoc.name} booked an in-person visit with ${doctorDoc.name} on ${appointmentDate} (${timeSlot}) for ${department}.`,
+          type: "info",
+          link: "/appointments",
+          read: false,
+        });
+      }
     } catch {
       // ignore notification error
     }
@@ -249,8 +318,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        message: "Appointment created successfully!",
+        message: isVirtual
+          ? "Virtual Teleconsultation booked and session created successfully!"
+          : "In-Person appointment created successfully!",
         appointment: populated,
+        teleconsultationSession: teleSession,
         data: populated,
       },
       { status: 201 }

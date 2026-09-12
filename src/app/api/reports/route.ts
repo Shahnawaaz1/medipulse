@@ -116,6 +116,59 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    if (type === "emergency") {
+      const EmergencyCase = (await import("@/models/EmergencyCase")).default;
+      const cases = await EmergencyCase.find().populate("patient assignedDoctor").sort({ arrivalTime: -1 });
+      const priorityCount = {
+        Critical: cases.filter((c: any) => c.triagePriority === "Critical").length,
+        High: cases.filter((c: any) => c.triagePriority === "High").length,
+        Medium: cases.filter((c: any) => c.triagePriority === "Medium").length,
+        Low: cases.filter((c: any) => c.triagePriority === "Low").length,
+      };
+      return NextResponse.json({
+        success: true,
+        type: "emergency",
+        data: {
+          cases,
+          priorityBreakdown: Object.entries(priorityCount).map(([k, v]) => ({ priority: k, count: v })),
+          total: cases.length,
+          admitted: cases.filter((c: any) => c.status === "Admitted").length,
+          discharged: cases.filter((c: any) => c.status === "Discharged").length,
+        },
+      });
+    }
+
+    if (type === "icu") {
+      const IcuRecord = (await import("@/models/IcuRecord")).default;
+      const icuRecords = await IcuRecord.find().populate("patient bed attendingIntensivist").sort({ admittedAt: -1 });
+      return NextResponse.json({
+        success: true,
+        type: "icu",
+        data: {
+          records: icuRecords,
+          total: icuRecords.length,
+          active: icuRecords.filter((r: any) => r.status === "Active").length,
+          ventilated: icuRecords.filter((r: any) => r.ventilatorStatus && !["None", "Room Air"].includes(r.ventilatorStatus)).length,
+        },
+      });
+    }
+
+    if (type === "ot") {
+      const OperationTheatre = (await import("@/models/OperationTheatre")).default;
+      const surgeries = await OperationTheatre.find().populate("patient leadSurgeon assistantSurgeon anesthetist").sort({ scheduledDate: -1 });
+      return NextResponse.json({
+        success: true,
+        type: "ot",
+        data: {
+          surgeries,
+          total: surgeries.length,
+          completed: surgeries.filter((s: any) => s.surgeryStatus === "Completed").length,
+          inProgress: surgeries.filter((s: any) => s.surgeryStatus === "In Progress").length,
+          scheduled: surgeries.filter((s: any) => s.surgeryStatus === "Scheduled").length,
+        },
+      });
+    }
+
     return NextResponse.json({ error: "Invalid report type" }, { status: 400 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

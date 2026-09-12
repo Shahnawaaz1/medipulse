@@ -37,8 +37,6 @@ export default function RadiologyDashboardPage() {
     loadRadData();
   }, []);
 
-  if (loading) return <LoadingSpinner />;
-
   return (
     <div className="space-y-6">
       <div className="rounded-3xl bg-gradient-to-r from-sky-700 via-sky-800 to-slate-900 p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">

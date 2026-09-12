@@ -41,8 +41,6 @@ export default function LabDashboardPage() {
     loadLabData();
   }, []);
 
-  if (loading) return <LoadingSpinner />;
-
   return (
     <div className="space-y-6">
       <div className="rounded-3xl bg-gradient-to-r from-emerald-700 via-emerald-800 to-slate-900 p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
