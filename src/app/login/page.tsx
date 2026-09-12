@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useAuth } from "@/context/AuthContext";
 import {
   HeartPulse,
@@ -29,7 +29,7 @@ import {
   Check,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 // Department Quick-Fill Presets (Strictly Role/Department Labels - No Individual Staff Names or Emails in the UI)
@@ -116,12 +116,18 @@ const departmentPresets = [
   },
 ];
 
-export default function LoginPage() {
+function LoginContent() {
   const { login, registerPatient } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const portalParam = searchParams.get("portal")?.toLowerCase();
+  const roleParam = searchParams.get("role")?.toLowerCase();
 
   // Mode: "STAFF" or "PATIENT"
-  const [activePortal, setActivePortal] = useState<"STAFF" | "PATIENT">("STAFF");
+  const [activePortal, setActivePortal] = useState<"STAFF" | "PATIENT">(() => {
+    if (portalParam === "patient") return "PATIENT";
+    return "STAFF";
+  });
 
   // Staff sub-view: "LOGIN" or "SUPER_ADMIN_SETUP"
   const [staffMode, setStaffMode] = useState<"LOGIN" | "SUPER_ADMIN_SETUP">("LOGIN");
@@ -129,16 +135,42 @@ export default function LoginPage() {
   // Patient sub-mode: "LOGIN" or "REGISTER"
   const [patientMode, setPatientMode] = useState<"LOGIN" | "REGISTER">("LOGIN");
 
-  // Staff Login Form State
-  const [staffIdentifier, setStaffIdentifier] = useState("admin@hospital.com");
-  const [staffPassword, setStaffPassword] = useState("password123");
+  // Staff Login Form State - initialized empty for clean security
+  const [staffIdentifier, setStaffIdentifier] = useState("");
+  const [staffPassword, setStaffPassword] = useState("");
   const [showStaffPassword, setShowStaffPassword] = useState(false);
-  const [selectedDepartment, setSelectedDepartment] = useState<string>("Administration");
+  const [selectedDepartment, setSelectedDepartment] = useState<string>("");
 
-  // Patient Login Form State
-  const [patientIdentifier, setPatientIdentifier] = useState("patient@hospital.com");
-  const [patientPassword, setPatientPassword] = useState("password123");
+  // Patient Login Form State - initialized empty for clean security
+  const [patientIdentifier, setPatientIdentifier] = useState("");
+  const [patientPassword, setPatientPassword] = useState("");
   const [showPatientPassword, setShowPatientPassword] = useState(false);
+
+  // Sync state with URL search params
+  useEffect(() => {
+    if (portalParam === "patient") {
+      setActivePortal("PATIENT");
+      setPatientMode("LOGIN");
+    } else if (portalParam === "staff") {
+      setActivePortal("STAFF");
+      setStaffMode("LOGIN");
+    }
+
+    if (roleParam) {
+      const match = departmentPresets.find(
+        (d) =>
+          d.role.toLowerCase() === roleParam ||
+          d.label.toLowerCase().includes(roleParam)
+      );
+      if (match) {
+        setActivePortal("STAFF");
+        setStaffMode("LOGIN");
+        setSelectedDepartment(match.label);
+        setStaffIdentifier(match.idOrEmail);
+        setStaffPassword(match.pass);
+      }
+    }
+  }, [portalParam, roleParam]);
 
   // Super Admin First-Time Setup State
   const [setupData, setSetupData] = useState({
@@ -876,6 +908,42 @@ export default function LoginPage() {
                       </button>
                     </form>
 
+                    {/* Patient Demo Quick-Fill Section */}
+                    <div className="mt-4 pt-3 border-t border-[#D9E4EF]">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider flex items-center gap-1.5">
+                          <KeyRound className="h-3.5 w-3.5 text-[#18A6A6]" />
+                          <span>Demo Patient Quick-Fill</span>
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPatientIdentifier("patient@hospital.com");
+                          setPatientPassword("password123");
+                          toast.info("Auto-filled Patient demo credentials");
+                        }}
+                        className="w-full flex items-center justify-between p-2.5 rounded-xl border border-[#D9E4EF] bg-[#F6F9FC] hover:bg-[#EAF4FB] hover:border-[#1769AA]/60 text-left transition-all group"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#EAF4FB] text-[#18A6A6]">
+                            <User className="h-3.5 w-3.5" />
+                          </div>
+                          <div>
+                            <span className="text-[11px] font-bold text-[#172B4D] group-hover:text-[#1769AA] block">
+                              Registered Patient Demo
+                            </span>
+                            <span className="text-[9px] text-[#64748B]">
+                              patient@hospital.com • password123
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-bold text-[#1769AA] group-hover:underline">
+                          Auto-Fill →
+                        </span>
+                      </button>
+                    </div>
+
                     <div className="mt-5 text-center pt-4 border-t border-[#D9E4EF]">
                       <p className="text-xs text-[#64748B]">
                         New Patient?{" "}
@@ -1070,5 +1138,22 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-[#F6F9FC]">
+          <div className="flex flex-col items-center gap-3">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#1769AA] border-t-transparent" />
+            <p className="text-xs font-semibold text-[#64748B]">Loading MediPulse Portal...</p>
+          </div>
+        </div>
+      }
+    >
+      <LoginContent />
+    </Suspense>
   );
 }

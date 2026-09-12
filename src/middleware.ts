@@ -57,8 +57,14 @@ export function middleware(req: NextRequest) {
 
   // If page is public (e.g. landing page or login)
   if (isPublicPath) {
-    // Only auto-redirect away from /login if logged in and not explicitly navigating with query params
-    if (pathname === "/login" && user && user.role && !req.nextUrl.searchParams.get("redirect")) {
+    // Only auto-redirect away from /login if logged in and NOT explicitly selecting a portal or action
+    const hasExplicitPortalAction =
+      req.nextUrl.searchParams.has("portal") ||
+      req.nextUrl.searchParams.has("role") ||
+      req.nextUrl.searchParams.has("switch") ||
+      req.nextUrl.searchParams.has("redirect");
+
+    if (pathname === "/login" && user && user.role && !hasExplicitPortalAction) {
       const defaultDash = getDefaultDashboard(user.role);
       return NextResponse.redirect(new URL(defaultDash, req.url));
     }
@@ -71,8 +77,15 @@ export function middleware(req: NextRequest) {
     loginUrl.searchParams.set("redirect", pathname);
     const response = NextResponse.redirect(loginUrl);
     if (token) {
-      // Clear stale/invalid cookie
-      response.cookies.set("hms_auth_token", "", { maxAge: 0, path: "/" });
+      // Clear stale/invalid cookie with production-aware settings
+      response.cookies.set("hms_auth_token", "", {
+        maxAge: 0,
+        path: "/",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        expires: new Date(0),
+      });
     }
     return response;
   }
@@ -86,8 +99,12 @@ export function middleware(req: NextRequest) {
     // If not allowed, redirect to their default dashboard
     const defaultDash = getDefaultDashboard(standardRole);
     // Prevent redirect loop if default dashboard itself wasn't allowed for some reason
-    if (pathname !== defaultDash) {
+    if (pathname !== defaultDash && defaultDash !== "/login") {
       return NextResponse.redirect(new URL(defaultDash, req.url));
+    } else {
+      const loginUrl = new URL("/login", req.url);
+      loginUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(loginUrl);
     }
   }
 

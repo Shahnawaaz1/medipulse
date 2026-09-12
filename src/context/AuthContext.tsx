@@ -42,7 +42,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchCurrentUser = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/auth/me");
+      const res = await fetch("/api/auth/me", {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" },
+      });
       if (res.ok) {
         const data = await res.json();
         if (data.authenticated && data.user) {
@@ -73,13 +76,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ identifier, password: pass }),
+        cache: "no-store",
       });
       const data = await res.json();
       if (res.ok && data.success) {
         setUser(data.user);
+        const resolvedDashboard = data.defaultDashboard || getDefaultDashboard(data.user.role);
         return {
           success: true,
-          defaultDashboard: data.defaultDashboard || getDefaultDashboard(data.user.role),
+          defaultDashboard: resolvedDashboard,
         };
       }
       return { success: false, error: data.error || "Authentication failed" };
@@ -96,6 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(patientData),
+        cache: "no-store",
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -118,6 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ roleQuickSwitch: newRole }),
+        cache: "no-store",
       });
       if (res.ok) {
         const data = await res.json();
@@ -134,12 +141,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
-      setUser(null);
-      router.push("/login");
+      await fetch("/api/auth/logout", { method: "POST", cache: "no-store" });
     } catch {
+      // ignore network errors on logout
+    } finally {
       setUser(null);
-      router.push("/login");
+      if (typeof window !== "undefined") {
+        try {
+          sessionStorage.clear();
+        } catch {
+          // ignore
+        }
+        window.location.href = "/login";
+      }
     }
   };
 

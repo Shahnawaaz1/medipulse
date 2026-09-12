@@ -45,8 +45,12 @@ export async function GET(req: NextRequest) {
         { status: 401 }
       );
       response.cookies.set("hms_auth_token", "", {
-        maxAge: 0,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
         path: "/",
+        maxAge: 0,
+        expires: new Date(0),
       });
       response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
       return response;
@@ -63,8 +67,12 @@ export async function GET(req: NextRequest) {
         { status: 403 }
       );
       response.cookies.set("hms_auth_token", "", {
-        maxAge: 0,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
         path: "/",
+        maxAge: 0,
+        expires: new Date(0),
       });
       response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
       return response;

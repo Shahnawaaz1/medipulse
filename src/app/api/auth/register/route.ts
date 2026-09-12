@@ -120,12 +120,13 @@ export async function POST(req: NextRequest) {
     );
 
     response.cookies.set("hms_auth_token", token, {
-      httpOnly: false,
+      httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 7,
       path: "/",
     });
+    response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
 
     return response;
   } catch (error: any) {

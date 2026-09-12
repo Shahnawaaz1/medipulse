@@ -234,6 +234,7 @@ export function isAdminRole(role: string | undefined | null): boolean {
 }
 
 export function getDefaultDashboard(role?: string | null): string {
+  if (!role) return "/login";
   const norm = normalizeRole(role);
   switch (norm) {
     case "SUPER_ADMIN":
@@ -267,15 +268,9 @@ export function canAccessRoute(role: string | undefined | null, path: string): b
   if (!role) return false;
   const norm = normalizeRole(role);
 
-  // Super Admin and Admin can access all ERP routes
-  if (norm === "SUPER_ADMIN" || norm === "ADMIN") {
-    return true;
-  }
-
-  // Patient access rules
+  // Patient access rules - strictly isolated to patient portal and shared patient features
   if (norm === "PATIENT") {
-    // Patients can only access /patient/* and their profile, teleconsultation, abha, or ai-assistant
-    if (path.startsWith("/patient")) return true;
+    if (path === "/patient" || path.startsWith("/patient/")) return true;
     if (path === "/profile") return true;
     if (path === "/teleconsultation") return true;
     if (path === "/abha") return true;
@@ -283,8 +278,13 @@ export function canAccessRoute(role: string | undefined | null, path: string): b
     return false;
   }
 
-  // Staff members should NOT access /patient/* portal (they have ERP modules)
-  if (path.startsWith("/patient/")) return false;
+  // Hospital staff and Admins should NOT access /patient/* portal (they have ERP modules)
+  if (path === "/patient" || path.startsWith("/patient/")) return false;
+
+  // Super Admin and Admin can access all ERP routes
+  if (norm === "SUPER_ADMIN" || norm === "ADMIN") {
+    return true;
+  }
 
   // AI Assistant is accessible to all authenticated staff
   if (path.startsWith("/ai-assistant")) return true;
