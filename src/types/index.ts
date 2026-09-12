@@ -8,6 +8,7 @@ export type StandardRole =
   | "ACCOUNTANT"
   | "LAB_TECHNICIAN"
   | "RADIOLOGY_TECHNICIAN"
+  | "STAFF"
   | "PATIENT";
 
 export type UserRole =
@@ -22,6 +23,7 @@ export type UserRole =
   | "lab_technician"
   | "radiology_technician"
   | "accountant"
+  | "staff"
   | "patient";
 
 export interface IUser {

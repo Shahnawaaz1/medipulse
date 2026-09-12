@@ -26,17 +26,17 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
 
   // Form State
-  const [name, setName] = useState("Dr. Sarah Jenkins");
-  const [email, setEmail] = useState("doctor@hospital.com");
-  const [phone, setPhone] = useState("+91 98765-43211");
-  const [department, setDepartment] = useState("Cardiology");
-  const [specialization, setSpecialization] = useState("Senior Interventional Cardiologist");
-  const [qualification, setQualification] = useState("MBBS, MD (Medicine), DM (Cardiology), FESC");
-  const [mciNumber, setMciNumber] = useState("MCI-CARD-9921");
-  const [experienceYears, setExperienceYears] = useState(14);
-  const [roomNumber, setRoomNumber] = useState("201");
+  const [name, setName] = useState(user?.name || "");
+  const [email, setEmail] = useState(user?.email || "");
+  const [phone, setPhone] = useState(user?.phone || "");
+  const [department, setDepartment] = useState(user?.department || "General Medicine");
+  const [specialization, setSpecialization] = useState("Consultant Specialist");
+  const [qualification, setQualification] = useState("MBBS, MD");
+  const [mciNumber, setMciNumber] = useState("");
+  const [experienceYears, setExperienceYears] = useState(10);
+  const [roomNumber, setRoomNumber] = useState("101");
   const [bio, setBio] = useState(
-    "Senior Interventional Cardiologist with over 14 years of experience in coronary angioplasty, heart failure management, and clinical cardiology."
+    "Hospital medical professional committed to excellence in patient diagnostics, healthcare informatics, and clinical governance."
   );
 
   // Practice Timings & Fees

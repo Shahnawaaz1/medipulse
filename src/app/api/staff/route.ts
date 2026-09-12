@@ -4,10 +4,13 @@ import Staff from "@/models/Staff";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
 import { normalizeRole } from "@/lib/permissions";
-import { getUserFromRequest } from "@/lib/auth";
+import { getUserFromRequest, requireRole, requireAuth } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   try {
+    const { user: authUser, errorResponse } = requireAuth(req);
+    if (errorResponse) return errorResponse;
+
     await connectToDatabase();
     const { searchParams } = new URL(req.url);
     const role = searchParams.get("role") || "";
@@ -21,36 +24,33 @@ export async function GET(req: NextRequest) {
     }
     if (department) query.department = department;
     if (search) {
+      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       query.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-        { staffId: { $regex: search, $options: "i" } },
-        { phone: { $regex: search, $options: "i" } },
+        { name: { $regex: escaped, $options: "i" } },
+        { email: { $regex: escaped, $options: "i" } },
+        { staffId: { $regex: escaped, $options: "i" } },
+        { phone: { $regex: escaped, $options: "i" } },
+        { department: { $regex: escaped, $options: "i" } },
+        { designation: { $regex: escaped, $options: "i" } },
       ];
     }
 
-    const staffList = await Staff.find(query).sort({ name: 1 });
+    const staffList = await Staff.find(query).sort({ createdAt: -1, name: 1 });
     return NextResponse.json({ success: true, staff: staffList });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: "Unable to load staff records. Please try again." },
+      { status: 500 }
+    );
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
+    const { user: currentUser, errorResponse } = requireRole(req, "SUPER_ADMIN", "ADMIN");
+    if (errorResponse) return errorResponse;
+
     await connectToDatabase();
-    const currentUser = getUserFromRequest(req);
-    
-    // Check permission - Only Admin/Super Admin can add staff
-    if (currentUser) {
-      const role = normalizeRole(currentUser.role);
-      if (role !== "SUPER_ADMIN" && role !== "ADMIN") {
-        return NextResponse.json(
-          { error: "Access Denied: Only Super Admin and Hospital Admin can create staff accounts." },
-          { status: 403 }
-        );
-      }
-    }
 
     const body = await req.json();
     const {

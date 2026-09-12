@@ -98,8 +98,11 @@ export default function StaffPage() {
   };
 
   useEffect(() => {
-    fetchStaff();
-  }, [roleFilter]);
+    const handler = setTimeout(() => {
+      fetchStaff();
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [roleFilter, searchQuery]);
 
   const handleCreateStaff = async (e: React.FormEvent) => {
     e.preventDefault();

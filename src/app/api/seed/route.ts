@@ -64,14 +64,15 @@ export async function POST() {
 
     const hashedPassword = await bcrypt.hash("password123", 10);
     await User.insertMany([
-      { name: "Dr. Alexander Wright", email: "admin@hospital.com", password: hashedPassword, role: "super_admin", phone: "+1 555-0100", department: "Administration", status: "active", avatar: "https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=150&auto=format&fit=crop&q=80" },
-      { name: "Dr. Sarah Jenkins", email: "doctor@hospital.com", password: hashedPassword, role: "doctor", phone: "+1 555-0101", department: "Cardiology", status: "active", avatar: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&auto=format&fit=crop&q=80" },
-      { name: "Emma Davis", email: "receptionist@hospital.com", password: hashedPassword, role: "receptionist", phone: "+1 555-0102", department: "Front Desk", status: "active", avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80" },
-      { name: "Nurse Clara Oswald", email: "nurse@hospital.com", password: hashedPassword, role: "nurse", phone: "+1 555-0103", department: "Inpatient Ward", status: "active", avatar: "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=150&auto=format&fit=crop&q=80" },
-      { name: "Marcus Vance", email: "pharmacist@hospital.com", password: hashedPassword, role: "pharmacist", phone: "+1 555-0104", department: "Pharmacy", status: "active", avatar: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=150&auto=format&fit=crop&q=80" },
-      { name: "David Chen", email: "lab@hospital.com", password: hashedPassword, role: "lab_technician", phone: "+1 555-0105", department: "Laboratory", status: "active", avatar: "https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=150&auto=format&fit=crop&q=80" },
-      { name: "Rachel Green", email: "accountant@hospital.com", password: hashedPassword, role: "accountant", phone: "+1 555-0106", department: "Finance & Accounts", status: "active", avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80" },
-      { name: "Johnathan Doe", email: "patient@hospital.com", password: hashedPassword, role: "patient", phone: "+1 555-0107", department: "Patient", status: "active", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80" },
+      { name: "Dr. Alexander Wright", email: "admin@hospital.com", password: hashedPassword, role: "SUPER_ADMIN", employeeId: "STF-ADMIN-01", phone: "+1 555-0100", department: "Administration", status: "active", avatar: "https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=150&auto=format&fit=crop&q=80" },
+      { name: "Dr. Sarah Jenkins", email: "doctor@hospital.com", password: hashedPassword, role: "DOCTOR", employeeId: "DOC-2026-001", phone: "+1 555-0101", department: "Cardiology", status: "active", avatar: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&auto=format&fit=crop&q=80" },
+      { name: "Emma Davis", email: "receptionist@hospital.com", password: hashedPassword, role: "RECEPTIONIST", employeeId: "STF-102", phone: "+1 555-0102", department: "Front Desk", status: "active", avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80" },
+      { name: "Nurse Clara Oswald", email: "nurse@hospital.com", password: hashedPassword, role: "NURSE", employeeId: "STF-103", phone: "+1 555-0103", department: "Inpatient Ward", status: "active", avatar: "https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=150&auto=format&fit=crop&q=80" },
+      { name: "Marcus Vance", email: "pharmacist@hospital.com", password: hashedPassword, role: "PHARMACIST", employeeId: "STF-104", phone: "+1 555-0104", department: "Pharmacy", status: "active", avatar: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=150&auto=format&fit=crop&q=80" },
+      { name: "David Chen", email: "lab@hospital.com", password: hashedPassword, role: "LAB_TECHNICIAN", employeeId: "STF-105", phone: "+1 555-0105", department: "Laboratory", status: "active", avatar: "https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=150&auto=format&fit=crop&q=80" },
+      { name: "Arthur Pendelton", email: "billing@hospital.com", password: hashedPassword, role: "ACCOUNTANT", employeeId: "STF-106", phone: "+1 555-0106", department: "Finance & Accounts", status: "active", avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80" },
+      { name: "Elena Rostova", email: "radiology@hospital.com", password: hashedPassword, role: "RADIOLOGY_TECHNICIAN", employeeId: "STF-107", phone: "+1 555-0108", department: "Radiology & Imaging", status: "active", avatar: "https://images.unsplash.com/photo-1594824813580-b2b93e506941?w=150&auto=format&fit=crop&q=80" },
+      { name: "John Miller", email: "patient@hospital.com", password: hashedPassword, role: "PATIENT", patientId: "PAT-8001", phone: "+1 555-0107", department: "Patient", status: "active", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80" },
     ]);
 
     await Department.insertMany([
@@ -175,10 +176,14 @@ export async function POST() {
     ]);
 
     await Staff.insertMany([
-      { staffId: "STF-101", name: "Nurse Clara Oswald", email: "clara.o@hospital.com", phone: "+1 555-4001", role: "nurse", department: "Inpatient Ward", designation: "Senior Charge Nurse", joiningDate: "2021-04-10", salary: 72000, status: "Active" },
-      { staffId: "STF-102", name: "Marcus Vance", email: "marcus.v@hospital.com", phone: "+1 555-4002", role: "pharmacist", department: "Pharmacy", designation: "Chief Pharmacist", joiningDate: "2020-02-15", salary: 85000, status: "Active" },
-      { staffId: "STF-103", name: "David Chen", email: "david.c@hospital.com", phone: "+1 555-4003", role: "lab_technician", department: "Laboratory", designation: "Lead Pathology Tech", joiningDate: "2019-08-01", salary: 68000, status: "Active" },
-      { staffId: "STF-104", name: "Rachel Green", email: "rachel.g@hospital.com", phone: "+1 555-4004", role: "accountant", department: "Finance & Accounts", designation: "Senior Accountant", joiningDate: "2022-01-15", salary: 75000, status: "Active" },
+      { staffId: "STF-ADMIN-01", name: "Dr. Alexander Wright", email: "admin@hospital.com", phone: "+1 555-0100", role: "SUPER_ADMIN", department: "Administration", designation: "Medical Superintendent", joiningDate: "2018-01-15", salary: 220000, status: "Active" },
+      { staffId: "DOC-2026-001", name: "Dr. Sarah Jenkins", email: "doctor@hospital.com", phone: "+1 555-0101", role: "DOCTOR", department: "Cardiology", designation: "Senior Interventional Cardiologist", joiningDate: "2019-03-01", salary: 180000, status: "Active" },
+      { staffId: "STF-102", name: "Emma Davis", email: "receptionist@hospital.com", phone: "+1 555-0102", role: "RECEPTIONIST", department: "Front Desk", designation: "Front Desk Officer", joiningDate: "2021-06-15", salary: 45000, status: "Active" },
+      { staffId: "STF-103", name: "Nurse Clara Oswald", email: "nurse@hospital.com", phone: "+1 555-0103", role: "NURSE", department: "Inpatient Ward", designation: "Senior Charge Nurse", joiningDate: "2020-09-10", salary: 65000, status: "Active" },
+      { staffId: "STF-104", name: "Marcus Vance", email: "pharmacist@hospital.com", phone: "+1 555-0104", role: "PHARMACIST", department: "Pharmacy", designation: "Chief Pharmacist", joiningDate: "2019-11-20", salary: 75000, status: "Active" },
+      { staffId: "STF-105", name: "David Chen", email: "lab@hospital.com", phone: "+1 555-0105", role: "LAB_TECHNICIAN", department: "Laboratory", designation: "Lead Pathology Tech", joiningDate: "2021-02-14", salary: 58000, status: "Active" },
+      { staffId: "STF-106", name: "Arthur Pendelton", email: "billing@hospital.com", phone: "+1 555-0106", role: "ACCOUNTANT", department: "Finance & Accounts", designation: "Senior Accountant", joiningDate: "2018-08-01", salary: 85000, status: "Active" },
+      { staffId: "STF-107", name: "Elena Rostova", email: "radiology@hospital.com", phone: "+1 555-0108", role: "RADIOLOGY_TECHNICIAN", department: "Radiology & Imaging", designation: "Lead Imaging Tech", joiningDate: "2020-04-12", salary: 62000, status: "Active" },
     ]);
 
     await Inventory.insertMany([

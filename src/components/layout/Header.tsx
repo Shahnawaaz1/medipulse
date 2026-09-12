@@ -254,7 +254,7 @@ export function Header({ onToggleSidebar }: HeaderProps) {
               />
               <div className="hidden text-left sm:block">
                 <p className="text-xs font-bold text-slate-800 dark:text-white leading-tight">
-                  {user?.name || "Dr. Alexander Wright"}
+                  {user?.name || (role === "SUPER_ADMIN" ? "Hospital Administrator" : ROLE_LABELS[role] || "Staff Member")}
                 </p>
                 <p className="text-[10px] font-semibold text-brand-600 dark:text-brand-400">
                   {ROLE_LABELS[role] || role}

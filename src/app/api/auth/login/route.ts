@@ -78,23 +78,74 @@ export async function POST(req: NextRequest) {
 
     if (!loginId || !password) {
       return NextResponse.json(
-        { error: "Login identifier (Email, Employee ID, or Phone) and password are required" },
+        { error: "Official Email or Employee ID and password are required." },
         { status: 400 }
       );
     }
 
-    // Search user by email, employee ID, or phone
-    const user = await User.findOne({
-      $or: [
-        { email: loginId.toLowerCase() },
-        { employeeId: { $regex: new RegExp(`^${loginId}$`, "i") } },
-        { phone: loginId },
-      ],
-    });
+    // Escape regex special characters
+    const escapedId = loginId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    let query: any;
+    if (loginId.includes("@")) {
+      query = { email: loginId.toLowerCase() };
+    } else {
+      query = {
+        $or: [
+          { employeeId: { $regex: new RegExp(`^${escapedId}$`, "i") } },
+          { phone: loginId },
+          { email: loginId.toLowerCase() },
+        ],
+      };
+    }
+
+    // Search user
+    let user = await User.findOne(query);
+
+    // If not found and identifier is not an email, check Staff/Doctor collections or known demo IDs
+    if (!user && !loginId.includes("@")) {
+      const Staff = (await import("@/models/Staff")).default;
+      const Doctor = (await import("@/models/Doctor")).default;
+      
+      const staffDoc = await Staff.findOne({
+        staffId: { $regex: new RegExp(`^${escapedId}$`, "i") },
+      });
+      const doctorDoc = !staffDoc ? await Doctor.findOne({
+        doctorId: { $regex: new RegExp(`^${escapedId}$`, "i") },
+      }) : null;
+
+      let foundEmail = staffDoc?.email || doctorDoc?.email;
+
+      // Demo mapping fallback for legacy unseeded IDs
+      if (!foundEmail) {
+        const demoMap: Record<string, string> = {
+          "stf-admin-01": "admin@hospital.com",
+          "doc-2026-001": "doctor@hospital.com",
+          "doc-1001": "doctor@hospital.com",
+          "doc-101": "doctor@hospital.com",
+          "stf-102": "receptionist@hospital.com",
+          "stf-103": "nurse@hospital.com",
+          "stf-104": "pharmacist@hospital.com",
+          "stf-105": "lab@hospital.com",
+          "stf-106": "billing@hospital.com",
+          "stf-107": "radiology@hospital.com",
+          "pat-8001": "patient@hospital.com",
+        };
+        foundEmail = demoMap[loginId.toLowerCase()];
+      }
+
+      if (foundEmail) {
+        user = await User.findOne({ email: foundEmail.toLowerCase() });
+        if (user && !user.employeeId) {
+          user.employeeId = loginId.toUpperCase();
+          await user.save();
+        }
+      }
+    }
 
     if (!user) {
       return NextResponse.json(
-        { error: "Invalid credentials. Please check your email/ID and password." },
+        { error: "Invalid credentials. Please check your official email / Employee ID and password." },
         { status: 401 }
       );
     }
@@ -104,7 +155,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "Your account is currently inactive or suspended. Please contact the hospital administrator.",
+            "Your staff account is currently inactive or suspended. Please contact the hospital administrator.",
         },
         { status: 403 }
       );

@@ -4,24 +4,37 @@ import Staff from "@/models/Staff";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
 import { normalizeRole } from "@/lib/permissions";
-import { getUserFromRequest } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const { user: currentUser, errorResponse } = requireRole(req, "SUPER_ADMIN", "ADMIN");
+    if (errorResponse) return errorResponse;
+
+    await connectToDatabase();
+    const { id } = params;
+    const staff = await Staff.findById(id);
+    if (!staff) {
+      return NextResponse.json({ success: false, error: "Staff record not found" }, { status: 404 });
+    }
+    return NextResponse.json({ success: true, staff });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
 
 export async function PUT(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const { user: currentUser, errorResponse } = requireRole(req, "SUPER_ADMIN", "ADMIN");
+    if (errorResponse) return errorResponse;
+
     await connectToDatabase();
-    const currentUser = getUserFromRequest(req);
-    if (currentUser) {
-      const role = normalizeRole(currentUser.role);
-      if (role !== "SUPER_ADMIN" && role !== "ADMIN") {
-        return NextResponse.json(
-          { error: "Access Denied: Only Administrators can update staff accounts." },
-          { status: 403 }
-        );
-      }
-    }
 
     const { id } = params;
     const body = await req.json();
@@ -91,18 +104,10 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await connectToDatabase();
-    const currentUser = getUserFromRequest(req);
-    if (currentUser) {
-      const role = normalizeRole(currentUser.role);
-      if (role !== "SUPER_ADMIN" && role !== "ADMIN") {
-        return NextResponse.json(
-          { error: "Access Denied: Only Administrators can remove staff accounts." },
-          { status: 403 }
-        );
-      }
-    }
+    const { user: currentUser, errorResponse } = requireRole(req, "SUPER_ADMIN", "ADMIN");
+    if (errorResponse) return errorResponse;
 
+    await connectToDatabase();
     const { id } = params;
     const staff = await Staff.findById(id);
     if (!staff) {

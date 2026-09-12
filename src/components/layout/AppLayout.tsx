@@ -28,6 +28,33 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
+  // While auth state is initializing
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 font-sans">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
+          <p className="text-xs text-slate-400">Loading MediPulse ERP...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If not authenticated on a protected page
+  if (!user && !isPublicPage) {
+    if (typeof window !== "undefined") {
+      router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
+    }
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-950">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
+          <p className="text-xs text-slate-400">Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Check if current user has permission to access this route
   const isRouteAllowed = canAccess(pathname);
 

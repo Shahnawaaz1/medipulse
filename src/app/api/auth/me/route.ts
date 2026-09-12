@@ -8,45 +8,91 @@ export async function GET(req: NextRequest) {
   try {
     const payload = getUserFromRequest(req);
     if (!payload) {
-      return NextResponse.json({ authenticated: false, user: null }, { status: 401 });
+      const response = NextResponse.json(
+        { authenticated: false, user: null, error: "Authentication required. Please sign in." },
+        { status: 401 }
+      );
+      response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+      return response;
     }
 
     await connectToDatabase();
-    const user = await User.findById(payload.userId).select("-password");
+
+    // Look up by userId, with fallback to email or employeeId
+    let user = null;
+    if (payload.userId) {
+      try {
+        user = await User.findById(payload.userId).select("-password");
+      } catch {
+        user = null;
+      }
+    }
+
+    if (!user && (payload.email || payload.employeeId)) {
+      const fallbackQuery: any = {};
+      const conditions: any[] = [];
+      if (payload.email) conditions.push({ email: payload.email.toLowerCase() });
+      if (payload.employeeId) conditions.push({ employeeId: payload.employeeId });
+      if (conditions.length > 0) {
+        fallbackQuery.$or = conditions;
+        user = await User.findOne(fallbackQuery).select("-password");
+      }
+    }
+
     if (!user) {
-      return NextResponse.json({ authenticated: false, error: "User not found" }, { status: 404 });
+      const response = NextResponse.json(
+        { authenticated: false, user: null, error: "User session expired or not found. Please sign in." },
+        { status: 401 }
+      );
+      response.cookies.set("hms_auth_token", "", {
+        maxAge: 0,
+        path: "/",
+      });
+      response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+      return response;
     }
 
     // Check account status
     if (user.status && user.status.toLowerCase() !== "active") {
-      return NextResponse.json(
+      const response = NextResponse.json(
         {
           authenticated: false,
+          user: null,
           error: "Account is inactive or suspended. Please contact administrator.",
         },
         { status: 403 }
       );
+      response.cookies.set("hms_auth_token", "", {
+        maxAge: 0,
+        path: "/",
+      });
+      response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+      return response;
     }
 
     const standardRole = normalizeRole(user.role);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       authenticated: true,
       user: {
-        id: user._id,
-        _id: user._id,
+        id: user._id.toString(),
+        _id: user._id.toString(),
         name: user.name,
         email: user.email,
         role: standardRole,
-        employeeId: user.employeeId,
-        patientId: user.patientId,
-        department: user.department,
-        avatar: user.avatar,
-        phone: user.phone,
-        status: user.status,
+        employeeId: user.employeeId || "",
+        patientId: user.patientId || "",
+        department: user.department || "",
+        avatar: user.avatar || "",
+        phone: user.phone || "",
+        status: user.status || "active",
       },
     });
+
+    response.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+    return response;
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Auth /me error:", error);
+    return NextResponse.json({ authenticated: false, error: error.message }, { status: 500 });
   }
 }

@@ -51,6 +51,7 @@ export function normalizeRole(role?: string | null): StandardRole {
   if (r === "ACCOUNTANT") return "ACCOUNTANT";
   if (r === "LAB_TECHNICIAN") return "LAB_TECHNICIAN";
   if (r === "RADIOLOGY_TECHNICIAN") return "RADIOLOGY_TECHNICIAN";
+  if (r === "STAFF") return "STAFF";
   if (r === "PATIENT") return "PATIENT";
 
   // Lowercase mappings
@@ -64,6 +65,7 @@ export function normalizeRole(role?: string | null): StandardRole {
   if (low === "accountant") return "ACCOUNTANT";
   if (low === "lab_technician") return "LAB_TECHNICIAN";
   if (low === "radiology_technician") return "RADIOLOGY_TECHNICIAN";
+  if (low === "staff") return "STAFF";
   if (low === "patient") return "PATIENT";
 
   return "PATIENT";
@@ -79,12 +81,22 @@ export const ROLE_LABELS: Record<StandardRole, string> = {
   ACCOUNTANT: "Accountant",
   LAB_TECHNICIAN: "Lab Technician",
   RADIOLOGY_TECHNICIAN: "Radiology Technician",
+  STAFF: "Hospital Staff",
   PATIENT: "Patient",
 };
 
 export const ROLE_PERMISSIONS: Record<StandardRole, Permission[]> = {
   SUPER_ADMIN: ["ALL"],
   ADMIN: ["ALL"],
+  STAFF: [
+    "VIEW_PATIENTS",
+    "VIEW_APPOINTMENTS",
+    "VIEW_OPD",
+    "VIEW_IPD",
+    "VIEW_BEDS",
+    "VIEW_DEPARTMENTS",
+    "VIEW_DOCTORS",
+  ],
   DOCTOR: [
     "VIEW_PATIENTS",
     "VIEW_APPOINTMENTS",
@@ -201,6 +213,8 @@ export function getDefaultDashboard(role?: string | null): string {
       return "/lab/dashboard";
     case "RADIOLOGY_TECHNICIAN":
       return "/radiology/dashboard";
+    case "STAFF":
+      return "/nurse/dashboard";
     case "PATIENT":
       return "/patient/dashboard";
     default:
@@ -233,6 +247,17 @@ export function canAccessRoute(role: string | undefined | null, path: string): b
 
   // Role specific allowed paths for hospital staff
   switch (norm) {
+    case "STAFF":
+      return (
+        path === "/nurse/dashboard" ||
+        path === "/profile" ||
+        path.startsWith("/ipd") ||
+        path.startsWith("/beds") ||
+        path.startsWith("/patients") ||
+        path.startsWith("/opd") ||
+        path.startsWith("/appointments") ||
+        path.startsWith("/departments")
+      );
     case "DOCTOR":
       return (
         path === "/doctor/dashboard" ||
