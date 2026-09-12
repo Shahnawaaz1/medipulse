@@ -78,5 +78,11 @@ const OperationTheatreSchema = new Schema<IOperationTheatreDocument>(
   { timestamps: true }
 );
 
+OperationTheatreSchema.index({ surgeryStatus: 1, scheduledDate: 1 });
+OperationTheatreSchema.index({ scheduledDate: 1 });
+OperationTheatreSchema.index({ patient: 1 });
+OperationTheatreSchema.index({ leadSurgeon: 1 });
+OperationTheatreSchema.index({ theatreNumber: 1 });
+
 export default mongoose.models.OperationTheatre ||
   mongoose.model<IOperationTheatreDocument>("OperationTheatre", OperationTheatreSchema);

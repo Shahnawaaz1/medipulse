@@ -129,5 +129,12 @@ const IcuRecordSchema = new Schema<IIcuRecordDocument>(
   { timestamps: true }
 );
 
+IcuRecordSchema.index({ status: 1 });
+IcuRecordSchema.index({ patient: 1 });
+IcuRecordSchema.index({ bed: 1 });
+IcuRecordSchema.index({ admission: 1 });
+IcuRecordSchema.index({ unit: 1, status: 1 });
+IcuRecordSchema.index({ updatedAt: -1 });
+
 export default mongoose.models.IcuRecord ||
   mongoose.model<IIcuRecordDocument>("IcuRecord", IcuRecordSchema);

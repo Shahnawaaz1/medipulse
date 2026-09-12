@@ -37,7 +37,8 @@ export async function GET(req: NextRequest) {
 
     const orders = await RadiologyOrder.find(query)
       .populate("patient doctor")
-      .sort({ orderDate: -1, createdAt: -1 });
+      .sort({ orderDate: -1, createdAt: -1 })
+      .lean();
 
     return NextResponse.json({ success: true, orders });
   } catch (error: any) {

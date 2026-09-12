@@ -37,6 +37,8 @@ const DoctorSchema = new Schema(
 
 DoctorSchema.index({ department: 1, status: 1 });
 DoctorSchema.index({ email: 1 });
+DoctorSchema.index({ name: 1 });
+DoctorSchema.index({ createdAt: -1 });
 
 export const Doctor = models.Doctor || model("Doctor", DoctorSchema);
 export default Doctor;

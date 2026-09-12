@@ -49,5 +49,11 @@ const StaffSchema = new Schema(
   { timestamps: true }
 );
 
+StaffSchema.index({ role: 1 });
+StaffSchema.index({ department: 1 });
+StaffSchema.index({ email: 1 });
+StaffSchema.index({ status: 1 });
+StaffSchema.index({ createdAt: -1 });
+
 export const Staff = models.Staff || model("Staff", StaffSchema);
 export default Staff;

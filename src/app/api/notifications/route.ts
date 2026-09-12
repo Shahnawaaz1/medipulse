@@ -5,8 +5,10 @@ import Notification from "@/models/Notification";
 export async function GET() {
   try {
     await connectToDatabase();
-    const notifications = await Notification.find().sort({ createdAt: -1 }).limit(30);
-    const unreadCount = await Notification.countDocuments({ read: false });
+    const [notifications, unreadCount] = await Promise.all([
+      Notification.find().sort({ createdAt: -1 }).limit(30).lean(),
+      Notification.countDocuments({ read: false }),
+    ]);
 
     return NextResponse.json({
       success: true,

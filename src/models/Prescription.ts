@@ -38,6 +38,12 @@ const PrescriptionSchema = new Schema(
   { timestamps: true }
 );
 
+PrescriptionSchema.index({ patient: 1, createdAt: -1 });
+PrescriptionSchema.index({ doctor: 1, createdAt: -1 });
+PrescriptionSchema.index({ date: -1 });
+PrescriptionSchema.index({ status: 1 });
+PrescriptionSchema.index({ createdAt: -1 });
+
 export const Prescription =
   models.Prescription || model("Prescription", PrescriptionSchema);
 export default Prescription;

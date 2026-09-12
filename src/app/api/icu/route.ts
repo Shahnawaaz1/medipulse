@@ -22,14 +22,16 @@ export async function GET(req: NextRequest) {
     if (status !== "All") query.status = status;
     if (unit && unit !== "All") query.unit = unit;
 
-    const records = await IcuRecord.find(query)
-      .populate("patient")
-      .populate("admission")
-      .populate("bed")
-      .populate("attendingIntensivist")
-      .sort({ updatedAt: -1 });
-
-    const icuBeds = await Bed.find({ type: "ICU" }).populate("currentAdmission");
+    const [records, icuBeds] = await Promise.all([
+      IcuRecord.find(query)
+        .populate("patient")
+        .populate("admission")
+        .populate("bed")
+        .populate("attendingIntensivist")
+        .sort({ updatedAt: -1 })
+        .lean(),
+      Bed.find({ type: "ICU" }).populate("currentAdmission").lean(),
+    ]);
 
     const stats = {
       totalIcuBeds: icuBeds.length,

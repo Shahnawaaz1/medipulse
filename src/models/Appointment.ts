@@ -54,6 +54,8 @@ AppointmentSchema.index({ doctor: 1, appointmentDate: 1, timeSlot: 1 });
 AppointmentSchema.index({ patient: 1, appointmentDate: -1 });
 AppointmentSchema.index({ appointmentDate: 1, status: 1 });
 AppointmentSchema.index({ consultationType: 1, status: 1 });
+AppointmentSchema.index({ status: 1 });
+AppointmentSchema.index({ createdAt: -1 });
 
 export const Appointment = models.Appointment || model("Appointment", AppointmentSchema);
 export default Appointment;

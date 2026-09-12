@@ -17,7 +17,8 @@ export async function GET(req: NextRequest) {
 
     const admissions = await Admission.find(query)
       .populate("patient doctor bed")
-      .sort({ admissionDate: -1 });
+      .sort({ admissionDate: -1 })
+      .lean();
 
     return NextResponse.json({ success: true, admissions });
   } catch (error: any) {

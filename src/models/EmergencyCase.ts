@@ -113,5 +113,11 @@ const EmergencyCaseSchema = new Schema<IEmergencyCaseDocument>(
   { timestamps: true }
 );
 
+EmergencyCaseSchema.index({ status: 1, triagePriority: 1 });
+EmergencyCaseSchema.index({ patient: 1 });
+EmergencyCaseSchema.index({ assignedDoctor: 1 });
+EmergencyCaseSchema.index({ arrivalTime: -1 });
+EmergencyCaseSchema.index({ createdAt: -1 });
+
 export default mongoose.models.EmergencyCase ||
   mongoose.model<IEmergencyCaseDocument>("EmergencyCase", EmergencyCaseSchema);

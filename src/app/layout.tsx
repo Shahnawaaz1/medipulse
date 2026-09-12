@@ -37,6 +37,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { ThemeProvider } from "@/context/ThemeContext";
+
 export default function RootLayout({
   children,
 }: {
@@ -60,12 +62,30 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
           rel="stylesheet"
         />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var theme = localStorage.getItem('hms_theme');
+                  if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
       </head>
       <body className="font-['Plus_Jakarta_Sans',sans-serif]">
-        <AuthProvider>
-          <AppLayout>{children}</AppLayout>
-          <PWARegister />
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <AppLayout>{children}</AppLayout>
+            <PWARegister />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -39,10 +39,11 @@ export default function PatientProfilePage() {
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
       toast.success("Profile details updated successfully!");
-    }, 600);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleUpdatePassword = async (e: React.FormEvent) => {

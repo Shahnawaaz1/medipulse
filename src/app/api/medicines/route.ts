@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
     if (category) query.category = category;
     if (status) query.status = status;
 
-    const medicines = await Medicine.find(query).sort({ name: 1 });
+    const medicines = await Medicine.find(query).sort({ name: 1 }).lean();
 
     const lowStockCount = medicines.filter(
       (m) => m.stockQuantity <= m.minThreshold && m.stockQuantity > 0

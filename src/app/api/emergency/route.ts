@@ -31,7 +31,8 @@ export async function GET(req: NextRequest) {
     const cases = await EmergencyCase.find(query)
       .populate("patient")
       .populate("assignedDoctor")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     const stats = {
       total: cases.length,

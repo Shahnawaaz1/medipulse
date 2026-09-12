@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     if (ward) query.ward = ward;
     if (status) query.status = status;
 
-    const beds = await Bed.find(query).sort({ ward: 1, bedNumber: 1 });
+    const beds = await Bed.find(query).sort({ ward: 1, bedNumber: 1 }).lean();
 
     // Group by ward
     const wardMap: Record<string, any[]> = {};

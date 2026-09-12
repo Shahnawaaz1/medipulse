@@ -38,5 +38,11 @@ const LabOrderSchema = new Schema(
   { timestamps: true }
 );
 
+LabOrderSchema.index({ patient: 1, createdAt: -1 });
+LabOrderSchema.index({ doctor: 1, createdAt: -1 });
+LabOrderSchema.index({ orderDate: -1 });
+LabOrderSchema.index({ status: 1 });
+LabOrderSchema.index({ createdAt: -1 });
+
 export const LabOrder = models.LabOrder || model("LabOrder", LabOrderSchema);
 export default LabOrder;

@@ -4,6 +4,7 @@ import TeleconsultationSession from "@/models/TeleconsultationSession";
 import Patient from "@/models/Patient";
 import Doctor from "@/models/Doctor";
 import Appointment from "@/models/Appointment";
+import Prescription from "@/models/Prescription";
 import Notification from "@/models/Notification";
 import { logAudit } from "@/lib/audit";
 
@@ -75,7 +76,8 @@ export async function GET(req: NextRequest) {
       .populate("appointment")
       .populate("prescription")
       .sort({ createdAt: -1 })
-      .limit(50);
+      .limit(50)
+      .lean();
 
     return NextResponse.json({ success: true, sessions });
   } catch (error: any) {

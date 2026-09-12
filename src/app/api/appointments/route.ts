@@ -77,7 +77,8 @@ export async function GET(req: NextRequest) {
       .populate("patient")
       .populate("doctor")
       .populate("teleconsultationSession")
-      .sort({ appointmentDate: -1, timeSlot: 1 });
+      .sort({ appointmentDate: -1, timeSlot: 1 })
+      .lean();
 
     return NextResponse.json({ success: true, appointments, data: appointments });
   } catch (error: any) {

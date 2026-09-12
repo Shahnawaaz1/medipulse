@@ -37,6 +37,8 @@ const PatientSchema = new Schema(
 PatientSchema.index({ phone: 1 });
 PatientSchema.index({ email: 1 });
 PatientSchema.index({ status: 1 });
+PatientSchema.index({ name: 1 });
+PatientSchema.index({ createdAt: -1 });
 
 export const Patient = models.Patient || model("Patient", PatientSchema);
 export default Patient;

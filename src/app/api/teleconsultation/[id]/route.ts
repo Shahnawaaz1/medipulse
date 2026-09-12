@@ -110,22 +110,27 @@ export async function GET(
           Prescription.find({ patient: patientId })
             .populate("doctor", "name specialization")
             .sort({ createdAt: -1 })
-            .limit(5),
+            .limit(5)
+            .lean(),
           LabOrder.find({ patient: patientId })
             .sort({ orderDate: -1 })
-            .limit(5),
+            .limit(5)
+            .lean(),
           RadiologyOrder.find({ patient: patientId })
             .sort({ orderDate: -1 })
-            .limit(5),
+            .limit(5)
+            .lean(),
           Admission.find({ patient: patientId })
             .populate("doctor", "name")
             .populate("bed")
             .sort({ admissionDate: -1 })
-            .limit(3),
+            .limit(3)
+            .lean(),
           Appointment.find({ patient: patientId })
             .populate("doctor", "name specialization")
             .sort({ appointmentDate: -1 })
-            .limit(5),
+            .limit(5)
+            .lean(),
         ]);
 
       clinicalHistory = {

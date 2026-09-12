@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
       ];
     }
 
-    const staffList = await Staff.find(query).sort({ createdAt: -1, name: 1 });
+    const staffList = await Staff.find(query).sort({ createdAt: -1, name: 1 }).lean();
     return NextResponse.json({ success: true, staff: staffList });
   } catch (error: any) {
     return NextResponse.json(

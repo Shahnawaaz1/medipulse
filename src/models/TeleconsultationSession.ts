@@ -1,4 +1,8 @@
 import mongoose, { Schema, Document, model, models } from "mongoose";
+import "./Patient";
+import "./Doctor";
+import "./Appointment";
+import "./Prescription";
 
 export interface ITeleconsultationSessionDocument extends Document {
   sessionId: string;
@@ -162,6 +166,12 @@ const TeleconsultationSessionSchema = new Schema<ITeleconsultationSessionDocumen
   },
   { timestamps: true }
 );
+
+TeleconsultationSessionSchema.index({ patient: 1, createdAt: -1 });
+TeleconsultationSessionSchema.index({ doctor: 1, createdAt: -1 });
+TeleconsultationSessionSchema.index({ appointment: 1 });
+TeleconsultationSessionSchema.index({ sessionStatus: 1 });
+TeleconsultationSessionSchema.index({ createdAt: -1 });
 
 export const TeleconsultationSession =
   models.TeleconsultationSession ||

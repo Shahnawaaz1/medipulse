@@ -26,5 +26,10 @@ const OpdRecordSchema = new Schema(
   { timestamps: true }
 );
 
+OpdRecordSchema.index({ date: 1, status: 1 });
+OpdRecordSchema.index({ patient: 1 });
+OpdRecordSchema.index({ doctor: 1 });
+OpdRecordSchema.index({ createdAt: -1 });
+
 export const OpdRecord = models.OpdRecord || model("OpdRecord", OpdRecordSchema);
 export default OpdRecord;

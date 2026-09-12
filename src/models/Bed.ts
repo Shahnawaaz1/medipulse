@@ -22,5 +22,9 @@ const BedSchema = new Schema(
   { timestamps: true }
 );
 
+BedSchema.index({ status: 1, ward: 1 });
+BedSchema.index({ type: 1, status: 1 });
+BedSchema.index({ currentAdmission: 1 });
+
 export const Bed = models.Bed || model("Bed", BedSchema);
 export default Bed;

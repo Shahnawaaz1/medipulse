@@ -43,7 +43,8 @@ export async function GET(req: NextRequest) {
 
     const invoices = await Invoice.find(query)
       .populate("patient doctor")
-      .sort({ invoiceDate: -1, createdAt: -1 });
+      .sort({ invoiceDate: -1, createdAt: -1 })
+      .lean();
 
     let totalBilled = 0;
     let totalCollected = 0;

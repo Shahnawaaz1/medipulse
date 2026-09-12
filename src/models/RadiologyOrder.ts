@@ -31,6 +31,13 @@ const RadiologyOrderSchema = new Schema(
   { timestamps: true }
 );
 
+RadiologyOrderSchema.index({ patient: 1, createdAt: -1 });
+RadiologyOrderSchema.index({ doctor: 1, createdAt: -1 });
+RadiologyOrderSchema.index({ orderDate: -1 });
+RadiologyOrderSchema.index({ status: 1 });
+RadiologyOrderSchema.index({ modality: 1 });
+RadiologyOrderSchema.index({ createdAt: -1 });
+
 export const RadiologyOrder =
   models.RadiologyOrder || model("RadiologyOrder", RadiologyOrderSchema);
 export default RadiologyOrder;

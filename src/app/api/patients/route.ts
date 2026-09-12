@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
       if (status) query.status = status;
     }
 
-    const patients = await Patient.find(query).sort({ createdAt: -1 });
+    const patients = await Patient.find(query).sort({ createdAt: -1 }).lean();
     return NextResponse.json({ success: true, patients });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

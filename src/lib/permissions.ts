@@ -108,6 +108,7 @@ export const ROLE_PERMISSIONS: Record<StandardRole, Permission[]> = {
     "VIEW_DEPARTMENTS",
     "VIEW_DOCTORS",
     "VIEW_EMERGENCY",
+    "USE_AI_ASSISTANT",
   ],
   DOCTOR: [
     "VIEW_PATIENTS",
@@ -154,6 +155,7 @@ export const ROLE_PERMISSIONS: Record<StandardRole, Permission[]> = {
     "VIEW_OT",
     "VIEW_NURSING",
     "MANAGE_NURSING",
+    "USE_AI_ASSISTANT",
     "USE_ABHA",
   ],
   RECEPTIONIST: [
@@ -169,6 +171,7 @@ export const ROLE_PERMISSIONS: Record<StandardRole, Permission[]> = {
     "VIEW_DOCTORS",
     "VIEW_EMERGENCY",
     "MANAGE_EMERGENCY",
+    "USE_AI_ASSISTANT",
     "USE_ABHA",
   ],
   PHARMACIST: [
@@ -179,6 +182,7 @@ export const ROLE_PERMISSIONS: Record<StandardRole, Permission[]> = {
     "VIEW_INVENTORY",
     "MANAGE_INVENTORY",
     "VIEW_PROCUREMENT",
+    "USE_AI_ASSISTANT",
   ],
   ACCOUNTANT: [
     "VIEW_INVOICES",
@@ -187,19 +191,23 @@ export const ROLE_PERMISSIONS: Record<StandardRole, Permission[]> = {
     "VIEW_PATIENTS",
     "VIEW_PROCUREMENT",
     "MANAGE_PROCUREMENT",
+    "USE_AI_ASSISTANT",
   ],
   LAB_TECHNICIAN: [
     "VIEW_LAB",
     "MANAGE_LAB",
     "VIEW_PATIENTS",
+    "USE_AI_ASSISTANT",
   ],
   RADIOLOGY_TECHNICIAN: [
     "VIEW_RADIOLOGY",
     "MANAGE_RADIOLOGY",
     "VIEW_PATIENTS",
+    "USE_AI_ASSISTANT",
   ],
   PATIENT: [
     "ACCESS_PATIENT_PORTAL",
+    "USE_AI_ASSISTANT",
   ],
 };
 
@@ -266,16 +274,20 @@ export function canAccessRoute(role: string | undefined | null, path: string): b
 
   // Patient access rules
   if (norm === "PATIENT") {
-    // Patients can only access /patient/* and their profile, teleconsultation, or abha if shared
+    // Patients can only access /patient/* and their profile, teleconsultation, abha, or ai-assistant
     if (path.startsWith("/patient")) return true;
     if (path === "/profile") return true;
     if (path === "/teleconsultation") return true;
     if (path === "/abha") return true;
+    if (path.startsWith("/ai-assistant")) return true;
     return false;
   }
 
   // Staff members should NOT access /patient/* portal (they have ERP modules)
   if (path.startsWith("/patient/")) return false;
+
+  // AI Assistant is accessible to all authenticated staff
+  if (path.startsWith("/ai-assistant")) return true;
 
   // Role specific allowed paths for hospital staff
   switch (norm) {
@@ -304,7 +316,6 @@ export function canAccessRoute(role: string | undefined | null, path: string): b
         path.startsWith("/icu") ||
         path.startsWith("/ot") ||
         path.startsWith("/teleconsultation") ||
-        path.startsWith("/ai-assistant") ||
         path.startsWith("/laboratory") ||
         path.startsWith("/radiology") ||
         path.startsWith("/doctors") ||

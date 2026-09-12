@@ -37,7 +37,8 @@ export async function GET(req: NextRequest) {
 
     const prescriptions = await Prescription.find(query)
       .populate("patient doctor")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     return NextResponse.json({ success: true, prescriptions });
   } catch (error: any) {

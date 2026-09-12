@@ -15,6 +15,8 @@ import {
   RefreshCw,
   UserCheck,
   Settings,
+  Sparkles,
+  Bot,
 } from "lucide-react";
 import { GlobalSearchModal } from "./GlobalSearchModal";
 import { QuickActionModal } from "./QuickActionModal";
@@ -22,6 +24,8 @@ import { cn } from "@/lib/utils";
 import { ROLE_LABELS, normalizeRole } from "@/lib/permissions";
 import Link from "next/link";
 import { toast } from "sonner";
+
+import { ThemeToggle } from "@/components/common/ThemeToggle";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -143,6 +147,17 @@ export function Header({ onToggleSidebar }: HeaderProps) {
 
         {/* Right Side Controls */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* AI Assistant Navigation Button */}
+          <Link
+            href="/ai-assistant"
+            prefetch={true}
+            className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-sky-600 px-3 py-1.5 text-xs font-bold text-white shadow-md shadow-purple-500/20 hover:brightness-110 transition-all group"
+          >
+            <Sparkles className="h-3.5 w-3.5 text-amber-300 animate-pulse group-hover:rotate-12 transition-transform" />
+            <span className="hidden xs:inline">🧠 AI Assistant</span>
+            <span className="xs:hidden">AI</span>
+          </Link>
+
           {/* Quick Action Button for staff */}
           {!isPatient && (
             <button
@@ -165,6 +180,9 @@ export function Header({ onToggleSidebar }: HeaderProps) {
               <span className="text-[11px]">Reset Data</span>
             </button>
           )}
+
+          {/* Dark / Light Theme Toggle */}
+          <ThemeToggle />
 
           {/* Notification Bell */}
           <div className="relative">

@@ -33,5 +33,11 @@ const AdmissionSchema = new Schema(
   { timestamps: true }
 );
 
+AdmissionSchema.index({ status: 1, admissionDate: -1 });
+AdmissionSchema.index({ patient: 1, status: 1 });
+AdmissionSchema.index({ doctor: 1 });
+AdmissionSchema.index({ bed: 1 });
+AdmissionSchema.index({ admissionDate: -1 });
+
 export const Admission = models.Admission || model("Admission", AdmissionSchema);
 export default Admission;

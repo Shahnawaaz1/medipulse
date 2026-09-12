@@ -33,7 +33,8 @@ export async function GET(req: NextRequest) {
       .populate("leadSurgeon")
       .populate("assistantSurgeon")
       .populate("anesthetist")
-      .sort({ scheduledDate: 1, startTime: 1 });
+      .sort({ scheduledDate: 1, startTime: 1 })
+      .lean();
 
     const stats = {
       totalScheduled: surgeries.length,

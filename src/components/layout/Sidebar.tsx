@@ -94,7 +94,7 @@ const allHospitalNavigationGroups: NavGroup[] = [
     title: "AI & SMART HEALTHCARE",
     items: [
       {
-        name: "AI Doctor Co-Pilot",
+        name: "🧠 AI Assistant",
         href: "/ai-assistant",
         icon: Sparkles,
         badge: "AI 2.0",
@@ -208,6 +208,13 @@ const patientNavigationGroups: NavGroup[] = [
   {
     title: "CONNECTED SERVICES",
     items: [
+      {
+        name: "🧠 AI Health Assistant",
+        href: "/ai-assistant",
+        icon: Sparkles,
+        badge: "AI 2.0",
+        badgeColor: "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300",
+      },
       {
         name: "ABHA Health Card (ABDM)",
         href: "/abha",
@@ -356,6 +363,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                     <Link
                       key={item.name}
                       href={item.href}
+                      prefetch={true}
                       onClick={() => {
                         if (typeof window !== "undefined" && window.innerWidth < 1024) {
                           onClose();

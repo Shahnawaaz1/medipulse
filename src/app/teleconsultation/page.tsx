@@ -542,6 +542,25 @@ function TeleconsultationContent() {
         }
       };
 
+      eventSource.onerror = () => {
+        if (eventSource.readyState === EventSource.CLOSED) {
+          setConnectionStatus("reconnecting");
+          // Resilient auto-reconnect after transient SSE drop
+          setTimeout(() => {
+            if (lifecycleState === "in-call" && (!eventSourceRef.current || eventSourceRef.current.readyState === EventSource.CLOSED)) {
+              try {
+                const retrySource = new EventSource(sseUrl);
+                eventSourceRef.current = retrySource;
+                retrySource.onmessage = eventSource.onmessage;
+                retrySource.onerror = eventSource.onerror;
+              } catch (reErr) {
+                console.warn("SSE reconnect attempt:", reErr);
+              }
+            }
+          }, 2000);
+        }
+      };
+
       // Notify Room
       sendSignal("join", { role: currentRole });
 

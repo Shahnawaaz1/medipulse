@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
     if (department) query.department = department;
     if (status) query.status = status;
 
-    const doctors = await Doctor.find(query).sort({ name: 1 });
+    const doctors = await Doctor.find(query).sort({ name: 1 }).lean();
     return NextResponse.json({ success: true, doctors, data: doctors });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -34,5 +34,10 @@ const MedicineSchema = new Schema(
   { timestamps: true }
 );
 
+MedicineSchema.index({ name: 1 });
+MedicineSchema.index({ status: 1, stockQuantity: 1 });
+MedicineSchema.index({ category: 1 });
+MedicineSchema.index({ createdAt: -1 });
+
 export const Medicine = models.Medicine || model("Medicine", MedicineSchema);
 export default Medicine;

@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     const type = searchParams.get("type"); // "catalog" or "orders"
 
     if (type === "catalog") {
-      const tests = await LabTest.find({ status: "Active" }).sort({ category: 1, name: 1 });
+      const tests = await LabTest.find({ status: "Active" }).sort({ category: 1, name: 1 }).lean();
       return NextResponse.json({ success: true, tests });
     }
 
@@ -23,12 +23,12 @@ export async function GET(req: NextRequest) {
 
     // Patient Data Isolation
     if (patientScope.isPatient) {
-      let patientDoc = null;
+      let patientDoc: any = null;
       if (patientScope.patientId) {
-        patientDoc = await Patient.findOne({ patientId: patientScope.patientId });
+        patientDoc = await Patient.findOne({ patientId: patientScope.patientId }).lean();
       }
       if (!patientDoc && patientScope.patientEmail) {
-        patientDoc = await Patient.findOne({ email: patientScope.patientEmail.toLowerCase() });
+        patientDoc = await Patient.findOne({ email: patientScope.patientEmail.toLowerCase() }).lean();
       }
 
       if (patientDoc) {
@@ -45,11 +45,13 @@ export async function GET(req: NextRequest) {
 
     if (status) query.status = status;
 
-    const orders = await LabOrder.find(query)
-      .populate("patient doctor tests.test")
-      .sort({ orderDate: -1, createdAt: -1 });
-
-    const testsCatalog = await LabTest.find().sort({ name: 1 });
+    const [orders, testsCatalog] = await Promise.all([
+      LabOrder.find(query)
+        .populate("patient doctor tests.test")
+        .sort({ orderDate: -1, createdAt: -1 })
+        .lean(),
+      LabTest.find().sort({ name: 1 }).lean(),
+    ]);
 
     return NextResponse.json({
       success: true,
