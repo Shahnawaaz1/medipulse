@@ -14,6 +14,15 @@ const HospitalSettingSchema = new Schema(
     taxId: { type: String, default: "TAX-MED-994821" },
     currencySymbol: { type: String, default: "$" },
     timezone: { type: String, default: "America/New_York" },
+    whatsappIntegration: {
+      enabled: { type: Boolean, default: true },
+      senderPhoneNumber: { type: String, default: "+1 (800) 555-0199" },
+      autoNotifyAppointments: { type: Boolean, default: true },
+      autoNotifyBilling: { type: Boolean, default: true },
+      autoNotifyReports: { type: Boolean, default: true },
+      autoNotifyAdmissions: { type: Boolean, default: true },
+      appointmentReminderHours: { type: Number, default: 24 },
+    },
   },
   { timestamps: true }
 );

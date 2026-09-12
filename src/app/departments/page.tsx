@@ -14,7 +14,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { StatusBadge } from "@/components/common/StatusBadge";
-import { LoadingSpinner } from "@/components/common/LoadingSpinner";
+import { CardGridSkeleton } from "@/components/common/Skeletons";
 import { Modal } from "@/components/common/Modal";
 import { EmptyState } from "@/components/common/EmptyState";
 import { toast } from "sonner";
@@ -137,7 +137,7 @@ export default function DepartmentsPage() {
       </div>
 
       {loading ? (
-        <LoadingSpinner label="Loading departments..." />
+        <CardGridSkeleton count={6} />
       ) : filteredDepts.length === 0 ? (
         <EmptyState
           icon={Building2}

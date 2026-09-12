@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
+import { AppLayoutSkeleton } from "../common/Skeletons";
 import { Toaster } from "sonner";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -28,13 +29,16 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // While auth state is initializing
+  // While auth state is initializing, show skeleton shell to feel instant
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950 font-sans">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
-          <p className="text-xs text-slate-400">Loading MediPulse ERP...</p>
+      <div className="flex min-h-screen bg-slate-50/60 dark:bg-slate-950 font-sans antialiased text-slate-900 dark:text-slate-50">
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <div className="flex flex-1 flex-col overflow-x-hidden min-w-0">
+          <Header onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+            <AppLayoutSkeleton />
+          </main>
         </div>
       </div>
     );

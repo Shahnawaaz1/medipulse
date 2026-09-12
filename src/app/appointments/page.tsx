@@ -19,7 +19,7 @@ import {
   Hospital,
 } from "lucide-react";
 import { StatusBadge } from "@/components/common/StatusBadge";
-import { LoadingSpinner } from "@/components/common/LoadingSpinner";
+import { TableSkeleton, CardGridSkeleton } from "@/components/common/Skeletons";
 import { Modal } from "@/components/common/Modal";
 import { EmptyState } from "@/components/common/EmptyState";
 import { formatDate } from "@/lib/utils";
@@ -269,7 +269,7 @@ export default function AppointmentsPage() {
       {viewMode === "list" && (
         <>
           {loading ? (
-            <LoadingSpinner label="Loading appointments..." />
+            <TableSkeleton rows={8} />
           ) : appointments.length === 0 ? (
             <EmptyState
               icon={CalendarIcon}
@@ -412,51 +412,57 @@ export default function AppointmentsPage() {
 
       {/* Time Slot Matrix View Mode */}
       {viewMode === "slots" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-          {timeSlots.map((slot) => {
-            const bookedInSlot = appointments.filter((a) => a.timeSlot === slot);
-            return (
-              <div
-                key={slot}
-                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:bg-slate-900 dark:border-slate-800"
-              >
-                <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 dark:border-slate-800">
-                  <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
-                    {slot}
-                  </span>
-                  <span
-                    className={`h-2 w-2 rounded-full ${
-                      bookedInSlot.length > 0 ? "bg-amber-500" : "bg-emerald-500"
-                    }`}
-                  />
-                </div>
+        <>
+          {loading ? (
+            <CardGridSkeleton count={10} />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+              {timeSlots.map((slot) => {
+                const bookedInSlot = appointments.filter((a) => a.timeSlot === slot);
+                return (
+                  <div
+                    key={slot}
+                    className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:bg-slate-900 dark:border-slate-800"
+                  >
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 dark:border-slate-800">
+                      <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                        {slot}
+                      </span>
+                      <span
+                        className={`h-2 w-2 rounded-full ${
+                          bookedInSlot.length > 0 ? "bg-amber-500" : "bg-emerald-500"
+                        }`}
+                      />
+                    </div>
 
-                <div className="mt-3 space-y-2">
-                  {bookedInSlot.length === 0 ? (
-                    <p className="py-4 text-center text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
-                      Slot Available
-                    </p>
-                  ) : (
-                    bookedInSlot.map((apt) => (
-                      <div
-                        key={apt._id}
-                        className="rounded-xl bg-slate-50 p-2.5 text-xs dark:bg-slate-800/50"
-                      >
-                        <p className="font-bold text-slate-900 dark:text-white truncate">
-                          {apt.patient?.name}
+                    <div className="mt-3 space-y-2">
+                      {bookedInSlot.length === 0 ? (
+                        <p className="py-4 text-center text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                          Slot Available
                         </p>
-                        <p className="text-[10px] text-brand-600 truncate">{apt.doctor?.name}</p>
-                        <div className="mt-1.5">
-                          <StatusBadge status={apt.status} size="sm" />
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                      ) : (
+                        bookedInSlot.map((apt) => (
+                          <div
+                            key={apt._id}
+                            className="rounded-xl bg-slate-50 p-2.5 text-xs dark:bg-slate-800/50"
+                          >
+                            <p className="font-bold text-slate-900 dark:text-white truncate">
+                              {apt.patient?.name}
+                            </p>
+                            <p className="text-[10px] text-brand-600 truncate">{apt.doctor?.name}</p>
+                            <div className="mt-1.5">
+                              <StatusBadge status={apt.status} size="sm" />
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
 
       {/* Book Appointment Modal */}

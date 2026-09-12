@@ -4,6 +4,7 @@ import Invoice from "@/models/Invoice";
 import Notification from "@/models/Notification";
 import Patient from "@/models/Patient";
 import { getPatientScope } from "@/lib/auth";
+import { triggerAsyncNotification } from "@/lib/notifications";
 
 export async function GET(req: NextRequest) {
   try {
@@ -123,6 +124,20 @@ export async function POST(req: NextRequest) {
         read: false,
       });
     }
+
+    // Trigger async WhatsApp + Multi-channel notification safely
+    triggerAsyncNotification({
+      eventType: body.paymentStatus === "Paid" ? "PAYMENT_RECEIVED" : "INVOICE_GENERATED",
+      patient: patientDoc,
+      data: {
+        invoiceNumber: populated.invoiceNumber || body.invoiceNumber,
+        totalAmount: populated.totalAmount || body.totalAmount,
+        paidAmount: populated.paidAmount || body.paidAmount,
+        balanceAmount: populated.balanceAmount || body.balanceAmount,
+        dueDate: populated.dueDate || body.dueDate,
+        portalUrl: `${process.env.NEXT_PUBLIC_APP_URL || ""}/patient/billing`,
+      },
+    });
 
     return NextResponse.json({ success: true, invoice: populated }, { status: 201 });
   } catch (error: any) {

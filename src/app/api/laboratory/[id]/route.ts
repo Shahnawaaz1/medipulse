@@ -4,6 +4,7 @@ import LabOrder from "@/models/LabOrder";
 import Notification from "@/models/Notification";
 import Patient from "@/models/Patient";
 import HospitalSetting from "@/models/HospitalSetting";
+import { triggerAsyncNotification } from "@/lib/notifications";
 
 export async function GET(
   req: NextRequest,
@@ -52,6 +53,17 @@ export async function PUT(
         type: "success",
         link: "/laboratory",
         read: false,
+      });
+
+      // Dispatch async WhatsApp + Multi-channel notification safely
+      triggerAsyncNotification({
+        eventType: "LAB_REPORT_READY",
+        patient: patientDoc,
+        data: {
+          testName: updated.tests?.map((t: any) => t.test?.name || t.name).filter(Boolean).join(", ") || "Diagnostic Test",
+          orderNumber: updated.orderNumber || params.id,
+          portalUrl: `${process.env.NEXT_PUBLIC_APP_URL || ""}/laboratory`,
+        },
       });
     }
 

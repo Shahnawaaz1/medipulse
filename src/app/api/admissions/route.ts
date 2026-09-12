@@ -3,6 +3,7 @@ import connectToDatabase from "@/lib/db";
 import Admission from "@/models/Admission";
 import Bed from "@/models/Bed";
 import Patient from "@/models/Patient";
+import { triggerAsyncNotification } from "@/lib/notifications";
 
 export async function GET(req: NextRequest) {
   try {
@@ -55,6 +56,19 @@ export async function POST(req: NextRequest) {
     const populated = await Admission.findById(newAdmission._id).populate(
       "patient doctor bed"
     );
+
+    // Trigger async WhatsApp + In-App notification safely
+    const populatedBed = populated?.bed as any;
+    triggerAsyncNotification({
+      eventType: "ADMISSION_CONFIRMATION",
+      patient: patientDoc,
+      data: {
+        admissionId: newAdmission.admissionId,
+        department: newAdmission.department,
+        roomNumber: populatedBed?.bedNumber ? `Bed ${populatedBed.bedNumber} (${populatedBed.room || "General Ward"})` : undefined,
+        admissionDate: newAdmission.admissionDate ? new Date(newAdmission.admissionDate).toLocaleDateString() : undefined,
+      },
+    });
 
     return NextResponse.json({ success: true, admission: populated }, { status: 201 });
   } catch (error: any) {

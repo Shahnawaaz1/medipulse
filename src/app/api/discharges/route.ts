@@ -7,6 +7,7 @@ import Patient from "@/models/Patient";
 import Doctor from "@/models/Doctor";
 import { requireAuth } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
+import { triggerAsyncNotification } from "@/lib/notifications";
 
 export async function GET(req: NextRequest) {
   try {
@@ -70,8 +71,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    let patientDoc = null;
     if (body.patient) {
-      await Patient.findByIdAndUpdate(body.patient, { status: "Discharged" });
+      patientDoc = await Patient.findByIdAndUpdate(body.patient, { status: "Discharged" });
     }
 
     await logAudit(req, {
@@ -80,6 +82,17 @@ export async function POST(req: NextRequest) {
       recordId: newDischarge.dischargeId,
       recordTitle: `Discharge Summary: ${newDischarge.dischargeId}`,
       details: `Finalized discharge for patient. Diagnosis: ${newDischarge.finalDiagnosis}. Type: ${newDischarge.dischargeType}`,
+    });
+
+    // Trigger async WhatsApp + In-App notification safely
+    triggerAsyncNotification({
+      eventType: "DISCHARGE_READY",
+      patient: patientDoc,
+      data: {
+        dischargeId: newDischarge.dischargeId,
+        dischargeDate: newDischarge.dischargeDate ? new Date(newDischarge.dischargeDate).toLocaleDateString() : undefined,
+        portalUrl: `${process.env.NEXT_PUBLIC_APP_URL || ""}/patient/portal`,
+      },
     });
 
     return NextResponse.json({ success: true, discharge: newDischarge }, { status: 201 });

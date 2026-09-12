@@ -66,6 +66,13 @@ export interface IPatient {
   medicalHistory?: string[];
   abhaNumber?: string;
   abhaAddress?: string;
+  notificationPreferences?: {
+    whatsappEnabled: boolean;
+    appointmentAlerts: boolean;
+    billingAlerts: boolean;
+    reportAlerts: boolean;
+    admissionAlerts: boolean;
+  };
   status: "Active" | "Discharged" | "Outpatient" | "Inpatient";
   createdAt?: string;
   updatedAt?: string;
@@ -359,6 +366,53 @@ export interface INotification {
   link?: string;
   read: boolean;
   createdAt: string;
+}
+
+export type NotificationChannel = "WHATSAPP" | "IN_APP" | "SMS" | "EMAIL";
+export type NotificationDeliveryStatus = "Sent" | "Demo" | "Failed" | "Pending";
+export type NotificationEventType =
+  | "APPOINTMENT_CONFIRMATION"
+  | "APPOINTMENT_REMINDER"
+  | "APPOINTMENT_CANCELLED"
+  | "APPOINTMENT_RESCHEDULED"
+  | "LAB_REPORT_READY"
+  | "RADIOLOGY_REPORT_READY"
+  | "INVOICE_GENERATED"
+  | "PAYMENT_RECEIVED"
+  | "ADMISSION_CONFIRMATION"
+  | "DISCHARGE_READY"
+  | "TEST_MESSAGE"
+  | "GENERAL";
+
+export interface INotificationLog {
+  _id?: string;
+  eventType: NotificationEventType;
+  channel: NotificationChannel;
+  recipientName: string;
+  recipientPhone?: string;
+  recipientEmail?: string;
+  patientId?: string;
+  status: NotificationDeliveryStatus;
+  title?: string;
+  messageSnippet: string;
+  providerResponse?: any;
+  errorDetails?: string;
+  metadata?: Record<string, any>;
+  sentAt?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface IWhatsAppIntegrationStatus {
+  enabled: boolean;
+  mode: "LIVE" | "DEMO" | "DISABLED";
+  configured: boolean;
+  provider: "Meta WhatsApp Cloud API" | "Simulated Demo Provider";
+  senderPhone?: string;
+  phoneNumberIdConfigured: boolean;
+  accessTokenConfigured: boolean;
+  totalSentToday: number;
+  recentLogs: INotificationLog[];
 }
 
 // ----------------- ABHA / ABDM SYSTEM -----------------

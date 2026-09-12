@@ -15,7 +15,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { StatusBadge } from "@/components/common/StatusBadge";
-import { LoadingSpinner } from "@/components/common/LoadingSpinner";
+import { CardGridSkeleton } from "@/components/common/Skeletons";
 import { Modal } from "@/components/common/Modal";
 import { EmptyState } from "@/components/common/EmptyState";
 import { formatCurrency } from "@/lib/utils";
@@ -168,7 +168,7 @@ export default function DoctorsPage() {
 
       {/* Doctors Grid */}
       {loading ? (
-        <LoadingSpinner label="Loading doctor roster..." />
+        <CardGridSkeleton count={6} />
       ) : doctors.length === 0 ? (
         <EmptyState
           icon={Stethoscope}

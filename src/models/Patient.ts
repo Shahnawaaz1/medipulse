@@ -30,6 +30,13 @@ const PatientSchema = new Schema(
       enum: ["Active", "Discharged", "Outpatient", "Inpatient"],
       default: "Active",
     },
+    notificationPreferences: {
+      whatsappEnabled: { type: Boolean, default: true },
+      appointmentAlerts: { type: Boolean, default: true },
+      billingAlerts: { type: Boolean, default: true },
+      reportAlerts: { type: Boolean, default: true },
+      admissionAlerts: { type: Boolean, default: true },
+    },
   },
   { timestamps: true }
 );

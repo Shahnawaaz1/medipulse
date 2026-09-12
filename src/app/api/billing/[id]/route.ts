@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db";
 import Invoice from "@/models/Invoice";
 import HospitalSetting from "@/models/HospitalSetting";
+import Patient from "@/models/Patient";
+import { triggerAsyncNotification } from "@/lib/notifications";
 
 export async function GET(
   req: NextRequest,
@@ -57,6 +59,23 @@ export async function PUT(
       new: true,
       runValidators: true,
     }).populate("patient doctor");
+
+    // Send notification if payment updated
+    if (body.paidAmount !== undefined || body.paymentStatus === "Paid") {
+      const patientDoc = await Patient.findById(updated.patient);
+      triggerAsyncNotification({
+        eventType: updated.paymentStatus === "Paid" ? "PAYMENT_RECEIVED" : "INVOICE_GENERATED",
+        patient: patientDoc,
+        data: {
+          invoiceNumber: updated.invoiceNumber,
+          totalAmount: updated.totalAmount,
+          paidAmount: updated.paidAmount,
+          balanceAmount: updated.balanceAmount,
+          dueDate: updated.dueDate,
+          portalUrl: `${process.env.NEXT_PUBLIC_APP_URL || ""}/patient/billing`,
+        },
+      });
+    }
 
     return NextResponse.json({ success: true, invoice: updated });
   } catch (error: any) {

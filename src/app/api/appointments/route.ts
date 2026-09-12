@@ -283,37 +283,49 @@ export async function POST(req: NextRequest) {
       .populate("doctor")
       .populate("teleconsultationSession");
 
-    // 9. Create System Notifications
+    // 9. Dispatch Multi-Channel Hospital & WhatsApp Notification
     try {
-      if (isVirtual && teleSession) {
-        // Patient Notification
-        await Notification.create({
-          title: "Virtual Teleconsultation Confirmed",
-          message: `Your video consultation with ${doctorDoc.name} (${department}) is scheduled for ${appointmentDate} at ${timeSlot}. Room: ${teleSession.sessionId}`,
-          type: "info",
-          link: `/teleconsultation?room=${teleSession.roomId}&appointment=${appointmentId}`,
-          read: false,
-        });
+      const { triggerAsyncNotification } = await import("@/lib/notifications");
+      triggerAsyncNotification({
+        eventType: "APPOINTMENT_CONFIRMATION",
+        recipient: {
+          name: patientDoc.name,
+          phone: patientDoc.phone,
+          email: patientDoc.email,
+          patientId: patientDoc.patientId,
+        },
+        data: {
+          appointmentId,
+          doctorName: doctorDoc.name,
+          department,
+          appointmentDate,
+          timeSlot,
+          consultationType,
+          type,
+          roomId: teleSession?.roomId,
+        },
+        inAppTitle: isVirtual ? "Virtual Teleconsultation Confirmed" : "Appointment Confirmed",
+        inAppMessage: isVirtual
+          ? `Your video consultation with ${doctorDoc.name} (${department}) is scheduled for ${appointmentDate} at ${timeSlot}.`
+          : `Your appointment with ${doctorDoc.name} (${department}) is confirmed for ${appointmentDate} at ${timeSlot}.`,
+        inAppLink: isVirtual && teleSession
+          ? `/teleconsultation?room=${teleSession.roomId}&appointment=${appointmentId}`
+          : "/patient/appointments",
+        inAppType: "success",
+      });
 
-        // Doctor Notification
-        await Notification.create({
-          title: "New Virtual Teleconsultation",
-          message: `Patient ${patientDoc.name} booked a video consultation for ${appointmentDate} at ${timeSlot}.`,
-          type: "info",
-          link: `/teleconsultation?room=${teleSession.roomId}&appointment=${appointmentId}`,
-          read: false,
-        });
-      } else {
-        await Notification.create({
-          title: "New In-Person Appointment Booked",
-          message: `${patientDoc.name} booked an in-person visit with ${doctorDoc.name} on ${appointmentDate} (${timeSlot}) for ${department}.`,
-          type: "info",
-          link: "/appointments",
-          read: false,
-        });
-      }
+      // Doctor In-App Notification
+      await Notification.create({
+        title: isVirtual ? "New Video Consultation Scheduled" : "New Patient Appointment",
+        message: `${patientDoc.name} has scheduled an appointment for ${appointmentDate} (${timeSlot}) with ${doctorDoc.name}.`,
+        type: "info",
+        link: isVirtual && teleSession
+          ? `/teleconsultation?room=${teleSession.roomId}&appointment=${appointmentId}`
+          : "/appointments",
+        read: false,
+      });
     } catch {
-      // ignore notification error
+      // Notification errors never block appointment creation
     }
 
     return NextResponse.json(

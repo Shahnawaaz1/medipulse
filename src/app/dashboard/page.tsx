@@ -30,6 +30,7 @@ import {
 import { StatCard } from "@/components/common/StatCard";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
+import { StatCardSkeleton, ChartSkeleton, TableSkeleton } from "@/components/common/Skeletons";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import Link from "next/link";
 import {
@@ -180,278 +181,294 @@ export default function DashboardPage() {
       </div>
 
       {/* KPI Stats 4-Grid */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Total Registered Patients"
-          value={stats.totalPatients || 0}
-          trend={{ value: 12, isPositive: true }}
-          description="Active Patient 360 EHRs"
-          icon={Users}
-        />
-        <StatCard
-          title="Today's Appointments"
-          value={stats.todayAppointments || 0}
-          trend={{ value: 5, isPositive: true }}
-          description={`${stats.todayOpd || 0} OPD tokens checked in`}
-          icon={Calendar}
-        />
-        <StatCard
-          title="Bed Occupancy"
-          value={`${stats.occupiedBeds || 0} / ${stats.totalBeds || 0}`}
-          trend={{ value: stats.bedOccupancyRate || 0, isPositive: true }}
-          description={`${stats.availableBeds || 0} Beds Available`}
-          icon={Bed}
-        />
-        <StatCard
-          title="Total Revenue Collections"
-          value={formatCurrency(stats.totalRevenue || 0)}
-          trend={{ value: 18, isPositive: true }}
-          description={`Today: ${formatCurrency(stats.todayRevenue || 0)}`}
-          icon={DollarSign}
-        />
-      </div>
+      {loading ? (
+        <StatCardSkeleton count={4} />
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            title="Total Registered Patients"
+            value={stats.totalPatients || 0}
+            trend={{ value: 12, isPositive: true }}
+            description="Active Patient 360 EHRs"
+            icon={Users}
+          />
+          <StatCard
+            title="Today's Appointments"
+            value={stats.todayAppointments || 0}
+            trend={{ value: 5, isPositive: true }}
+            description={`${stats.todayOpd || 0} OPD tokens checked in`}
+            icon={Calendar}
+          />
+          <StatCard
+            title="Bed Occupancy"
+            value={`${stats.occupiedBeds || 0} / ${stats.totalBeds || 0}`}
+            trend={{ value: stats.bedOccupancyRate || 0, isPositive: true }}
+            description={`${stats.availableBeds || 0} Beds Available`}
+            icon={Bed}
+          />
+          <StatCard
+            title="Total Revenue Collections"
+            value={formatCurrency(stats.totalRevenue || 0)}
+            trend={{ value: 18, isPositive: true }}
+            description={`Today: ${formatCurrency(stats.todayRevenue || 0)}`}
+            icon={DollarSign}
+          />
+        </div>
+      )}
 
       {/* Charts & Graphs Row */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Revenue Analytics Area Chart */}
-        <div className="lg:col-span-2 rounded-3xl bg-white p-6 shadow-sm border border-slate-100 dark:bg-slate-900 dark:border-slate-800">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-            <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                Revenue & Financial Performance
-              </h3>
-              <p className="text-xs text-slate-400">
-                Monthly trends for OPD, IPD, Pharmacy, and Diagnostics
-              </p>
-            </div>
-            <div className="flex items-center gap-3 flex-wrap">
-              <div className="hidden sm:flex items-center gap-2.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-                <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-sky-500"></span> Total</span>
-                <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-teal-500"></span> IPD</span>
-                <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-amber-500"></span> OPD</span>
+        {loading ? (
+          <div className="lg:col-span-2"><ChartSkeleton /></div>
+        ) : (
+          <div className="lg:col-span-2 rounded-3xl bg-white p-6 shadow-sm border border-slate-100 dark:bg-slate-900 dark:border-slate-800">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  Revenue & Financial Performance
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Monthly trends for OPD, IPD, Pharmacy, and Diagnostics
+                </p>
               </div>
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full dark:bg-emerald-950/60 dark:text-emerald-400">
-                <TrendingUp className="h-3.5 w-3.5" />
-                <span>+18.4% Growth</span>
-              </span>
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="hidden sm:flex items-center gap-2.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                  <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-sky-500"></span> Total</span>
+                  <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-teal-500"></span> IPD</span>
+                  <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-amber-500"></span> OPD</span>
+                </div>
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full dark:bg-emerald-950/60 dark:text-emerald-400">
+                  <TrendingUp className="h-3.5 w-3.5" />
+                  <span>+18.4% Growth</span>
+                </span>
+              </div>
+            </div>
+
+            <div className="h-72 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={revenueAnalytics}
+                  margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#0284c7" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#0284c7" stopOpacity={0.0} />
+                    </linearGradient>
+                    <linearGradient id="colorIpd" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#14b8a6" stopOpacity={0.0} />
+                    </linearGradient>
+                    <linearGradient id="colorOpd" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis
+                    dataKey="month"
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{ fontSize: 12, fill: "#94a3b8" }}
+                  />
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{ fontSize: 12, fill: "#94a3b8" }}
+                    tickFormatter={(val) => `₹${val >= 1000 ? Math.round(val / 1000) + 'k' : val}`}
+                  />
+                  <Tooltip
+                    formatter={(value: any, name: any) => [
+                      formatCurrency(Number(value)),
+                      name === "revenue" || name === "amount" ? "Total Revenue" : String(name).toUpperCase(),
+                    ]}
+                    contentStyle={{
+                      backgroundColor: "#0f172a",
+                      border: "none",
+                      borderRadius: "12px",
+                      color: "#fff",
+                      fontSize: "12px",
+                    }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="revenue"
+                    name="Total Revenue"
+                    stroke="#0284c7"
+                    strokeWidth={3}
+                    fillOpacity={1}
+                    fill="url(#colorRevenue)"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="ipd"
+                    name="IPD Admissions"
+                    stroke="#14b8a6"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#colorIpd)"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="opd"
+                    name="OPD Consultations"
+                    stroke="#f59e0b"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#colorOpd)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </div>
-
-          <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart
-                data={revenueAnalytics}
-                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-              >
-                <defs>
-                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0284c7" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#0284c7" stopOpacity={0.0} />
-                  </linearGradient>
-                  <linearGradient id="colorIpd" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#14b8a6" stopOpacity={0.0} />
-                  </linearGradient>
-                  <linearGradient id="colorOpd" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.25} />
-                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis
-                  dataKey="month"
-                  tickLine={false}
-                  axisLine={false}
-                  tick={{ fontSize: 12, fill: "#94a3b8" }}
-                />
-                <YAxis
-                  tickLine={false}
-                  axisLine={false}
-                  tick={{ fontSize: 12, fill: "#94a3b8" }}
-                  tickFormatter={(val) => `₹${val >= 1000 ? Math.round(val / 1000) + 'k' : val}`}
-                />
-                <Tooltip
-                  formatter={(value: any, name: any) => [
-                    formatCurrency(Number(value)),
-                    name === "revenue" || name === "amount" ? "Total Revenue" : String(name).toUpperCase(),
-                  ]}
-                  contentStyle={{
-                    backgroundColor: "#0f172a",
-                    border: "none",
-                    borderRadius: "12px",
-                    color: "#fff",
-                    fontSize: "12px",
-                  }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="revenue"
-                  name="Total Revenue"
-                  stroke="#0284c7"
-                  strokeWidth={3}
-                  fillOpacity={1}
-                  fill="url(#colorRevenue)"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="ipd"
-                  name="IPD Admissions"
-                  stroke="#14b8a6"
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#colorIpd)"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="opd"
-                  name="OPD Consultations"
-                  stroke="#f59e0b"
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#colorOpd)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+        )}
 
         {/* Department Patient Distribution */}
-        <div className="rounded-3xl bg-white p-6 shadow-sm border border-slate-100 dark:bg-slate-900 dark:border-slate-800 flex flex-col justify-between">
-          <div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">
-              Department Clinical Volume
-            </h3>
-            <p className="text-xs text-slate-400">
-              Patient distribution across hospital wings
-            </p>
-          </div>
+        {loading ? (
+          <div><ChartSkeleton /></div>
+        ) : (
+          <div className="rounded-3xl bg-white p-6 shadow-sm border border-slate-100 dark:bg-slate-900 dark:border-slate-800 flex flex-col justify-between">
+            <div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                Department Clinical Volume
+              </h3>
+              <p className="text-xs text-slate-400">
+                Patient distribution across hospital wings
+              </p>
+            </div>
 
-          <div className="h-48 w-full my-4 relative">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={departmentDistribution}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={75}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {departmentDistribution.map((entry: any, index: number) => {
-                    const colors = ["#0284c7", "#14b8a6", "#6366f1", "#f59e0b", "#ec4899", "#8b5cf6"];
-                    return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
-                  })}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#0f172a",
-                    border: "none",
-                    borderRadius: "12px",
-                    color: "#fff",
-                    fontSize: "12px",
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+            <div className="h-48 w-full my-4 relative">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={departmentDistribution}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={75}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {departmentDistribution.map((entry: any, index: number) => {
+                      const colors = ["#0284c7", "#14b8a6", "#6366f1", "#f59e0b", "#ec4899", "#8b5cf6"];
+                      return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                    })}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#0f172a",
+                      border: "none",
+                      borderRadius: "12px",
+                      color: "#fff",
+                      fontSize: "12px",
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
 
-          <div className="space-y-2">
-            {departmentDistribution.slice(0, 4).map((dept: any, idx: number) => {
-              const colors = ["bg-sky-500", "bg-teal-500", "bg-indigo-500", "bg-amber-500"];
-              return (
-                <div key={idx} className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className={`h-2.5 w-2.5 rounded-full ${colors[idx % colors.length]}`} />
-                    <span className="font-semibold text-slate-700 dark:text-slate-300">
-                      {dept.name}
+            <div className="space-y-2">
+              {departmentDistribution.slice(0, 4).map((dept: any, idx: number) => {
+                const colors = ["bg-sky-500", "bg-teal-500", "bg-indigo-500", "bg-amber-500"];
+                return (
+                  <div key={idx} className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className={`h-2.5 w-2.5 rounded-full ${colors[idx % colors.length]}`} />
+                      <span className="font-semibold text-slate-700 dark:text-slate-300">
+                        {dept.name}
+                      </span>
+                    </div>
+                    <span className="font-bold text-slate-900 dark:text-white">
+                      {dept.value} Patients
                     </span>
                   </div>
-                  <span className="font-bold text-slate-900 dark:text-white">
-                    {dept.value} Patients
-                  </span>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Appointments & Live Quick Links */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Recent Appointments Table */}
-        <div className="lg:col-span-2 rounded-3xl bg-white p-6 shadow-sm border border-slate-100 dark:bg-slate-900 dark:border-slate-800">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                Live Outpatient Queue & Appointments
-              </h3>
-              <p className="text-xs text-slate-400">
-                Today's scheduled patient consultations
-              </p>
+        {loading ? (
+          <div className="lg:col-span-2"><TableSkeleton rows={4} /></div>
+        ) : (
+          <div className="lg:col-span-2 rounded-3xl bg-white p-6 shadow-sm border border-slate-100 dark:bg-slate-900 dark:border-slate-800">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  Live Outpatient Queue & Appointments
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Today's scheduled patient consultations
+                </p>
+              </div>
+              <Link
+                href="/appointments"
+                className="flex items-center gap-1 text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400"
+              >
+                <span>View All</span>
+                <ArrowUpRight className="h-4 w-4" />
+              </Link>
             </div>
-            <Link
-              href="/appointments"
-              className="flex items-center gap-1 text-xs font-bold text-brand-600 hover:text-brand-700 dark:text-brand-400"
-            >
-              <span>View All</span>
-              <ArrowUpRight className="h-4 w-4" />
-            </Link>
-          </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="border-b border-slate-100 text-slate-400 dark:border-slate-800">
-                <tr>
-                  <th className="py-3 px-3 font-semibold">Patient</th>
-                  <th className="py-3 px-3 font-semibold">Doctor & Dept</th>
-                  <th className="py-3 px-3 font-semibold">Time Slot</th>
-                  <th className="py-3 px-3 font-semibold">Type</th>
-                  <th className="py-3 px-3 font-semibold">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                {recentAppointments.length === 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="border-b border-slate-100 text-slate-400 dark:border-slate-800">
                   <tr>
-                    <td colSpan={5} className="text-center py-6 text-slate-400">
-                      No appointments scheduled.
-                    </td>
+                    <th className="py-3 px-3 font-semibold">Patient</th>
+                    <th className="py-3 px-3 font-semibold">Doctor & Dept</th>
+                    <th className="py-3 px-3 font-semibold">Time Slot</th>
+                    <th className="py-3 px-3 font-semibold">Type</th>
+                    <th className="py-3 px-3 font-semibold">Status</th>
                   </tr>
-                ) : (
-                  recentAppointments.map((apt: any) => (
-                    <tr key={apt._id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/30">
-                      <td className="py-3 px-3">
-                        <div className="font-bold text-slate-900 dark:text-white">
-                          {apt.patient?.name || "Unknown Patient"}
-                        </div>
-                        <div className="text-[10px] text-slate-400">
-                          {apt.patient?.patientId || "PID-N/A"}
-                        </div>
-                      </td>
-                      <td className="py-3 px-3">
-                        <div className="font-medium text-slate-800 dark:text-slate-200">
-                          {apt.doctor?.name || "Dr. Unassigned"}
-                        </div>
-                        <div className="text-[10px] text-slate-400">{apt.department}</div>
-                      </td>
-                      <td className="py-3 px-3 font-medium text-slate-600 dark:text-slate-400">
-                        {apt.timeSlot}
-                      </td>
-                      <td className="py-3 px-3">
-                        <span className="rounded-lg bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                          {apt.type}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3">
-                        <StatusBadge status={apt.status} />
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                  {recentAppointments.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="text-center py-6 text-slate-400">
+                        No appointments scheduled.
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    recentAppointments.map((apt: any) => (
+                      <tr key={apt._id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/30">
+                        <td className="py-3 px-3">
+                          <div className="font-bold text-slate-900 dark:text-white">
+                            {apt.patient?.name || "Unknown Patient"}
+                          </div>
+                          <div className="text-[10px] text-slate-400">
+                            {apt.patient?.patientId || "PID-N/A"}
+                          </div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="font-medium text-slate-800 dark:text-slate-200">
+                            {apt.doctor?.name || "Dr. Unassigned"}
+                          </div>
+                          <div className="text-[10px] text-slate-400">{apt.department}</div>
+                        </td>
+                        <td className="py-3 px-3 font-medium text-slate-600 dark:text-slate-400">
+                          {apt.timeSlot}
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className="rounded-lg bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                            {apt.type}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3">
+                          <StatusBadge status={apt.status} />
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Live Quick Links Panel */}
         <div className="rounded-3xl bg-white p-6 shadow-sm border border-slate-100 dark:bg-slate-900 dark:border-slate-800 space-y-4">

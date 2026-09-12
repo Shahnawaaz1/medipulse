@@ -3,6 +3,7 @@ import connectToDatabase from "@/lib/db";
 import RadiologyOrder from "@/models/RadiologyOrder";
 import Notification from "@/models/Notification";
 import Patient from "@/models/Patient";
+import { triggerAsyncNotification } from "@/lib/notifications";
 
 export async function GET(
   req: NextRequest,
@@ -41,6 +42,18 @@ export async function PUT(
         type: "success",
         link: "/radiology",
         read: false,
+      });
+
+      // Dispatch async WhatsApp + Multi-channel notification safely
+      triggerAsyncNotification({
+        eventType: "RADIOLOGY_REPORT_READY",
+        patient: patientDoc,
+        data: {
+          modality: updated.modality || "Radiology Scan",
+          bodyPart: updated.bodyPart,
+          orderNumber: updated.orderNumber || params.id,
+          portalUrl: `${process.env.NEXT_PUBLIC_APP_URL || ""}/radiology`,
+        },
       });
     }
 
