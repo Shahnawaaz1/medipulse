@@ -6,8 +6,10 @@ import Link from "next/link";
 import { Printer, ArrowLeft, HeartPulse, Stethoscope, FileSignature } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
+import { useAuth } from "@/context/AuthContext";
 
 export default function PrintPrescriptionPage() {
+  const { isPatient } = useAuth();
   const params = useParams();
   const id = params?.id as string;
   const [data, setData] = useState<any>(null);
@@ -55,7 +57,7 @@ export default function PrintPrescriptionPage() {
       {/* Non-printable action bar */}
       <div className="flex items-center justify-between no-print">
         <Link
-          href="/prescriptions"
+          href={isPatient ? "/patient/prescriptions" : "/prescriptions"}
           className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -159,7 +161,7 @@ export default function PrintPrescriptionPage() {
                 {prescription.medicines?.map((med: any, idx: number) => (
                   <tr key={idx}>
                     <td className="p-3 font-semibold text-slate-400">{idx + 1}</td>
-                    <td className="p-3 font-bold text-slate-900">{med.medicineName}</td>
+                    <td className="p-3 font-bold text-slate-900">{med.medicineName || med.name || med.medicine}</td>
                     <td className="p-3">{med.dosage}</td>
                     <td className="p-3 font-bold text-brand-700">{med.frequency}</td>
                     <td className="p-3">{med.duration}</td>

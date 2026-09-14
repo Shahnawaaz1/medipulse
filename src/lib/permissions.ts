@@ -275,6 +275,8 @@ export function canAccessRoute(role: string | undefined | null, path: string): b
     if (path === "/teleconsultation") return true;
     if (path === "/abha") return true;
     if (path.startsWith("/ai-assistant")) return true;
+    // Allow viewing specific prescriptions, but not the prescriptions list
+    if (path.startsWith("/prescriptions/") && path.split("/").length > 2) return true;
     return false;
   }
 

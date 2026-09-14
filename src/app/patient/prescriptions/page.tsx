@@ -14,6 +14,7 @@ import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { EmptyState } from "@/components/common/EmptyState";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+import Link from "next/link";
 
 export default function PatientPrescriptionsPage() {
   const { user } = useAuth();
@@ -107,7 +108,7 @@ export default function PatientPrescriptionsPage() {
                         <tr key={idx} className="text-slate-700 dark:text-slate-300">
                           <td className="py-2.5 font-bold flex items-center gap-2">
                             <Pill className="h-3.5 w-3.5 text-teal-600" />
-                            <span>{med.name || med.medicine}</span>
+                            <span>{med.medicineName || med.name || med.medicine}</span>
                           </td>
                           <td className="py-2.5">{med.dosage || "1 Tab"}</td>
                           <td className="py-2.5">{med.frequency || "Twice Daily (1-0-1)"}</td>
@@ -120,12 +121,24 @@ export default function PatientPrescriptionsPage() {
                 </div>
               </div>
 
-              {rx.notes && (
-                <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-600 dark:bg-slate-800/60 dark:text-slate-400">
-                  <span className="font-bold text-slate-800 dark:text-slate-200">Doctor Advice: </span>
-                  {rx.notes}
+              <div className="flex flex-col sm:flex-row gap-4 justify-between sm:items-center">
+                {rx.notes && (
+                  <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-600 dark:bg-slate-800/60 dark:text-slate-400 flex-1">
+                    <span className="font-bold text-slate-800 dark:text-slate-200">Doctor Advice: </span>
+                    {rx.notes}
+                  </div>
+                )}
+                
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                  <Link
+                    href={`/prescriptions/${rx._id}`}
+                    className="flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-slate-800 dark:bg-brand-600 dark:hover:bg-brand-700"
+                  >
+                    <Printer className="h-3.5 w-3.5" />
+                    <span>Print Rx</span>
+                  </Link>
                 </div>
-              )}
+              </div>
             </div>
           ))
         )}
